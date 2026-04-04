@@ -16,809 +16,611 @@
     ::-webkit-scrollbar-track { background: #16213e; }
     ::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 4px; }
     .pixel-border { box-shadow: 0 0 0 2px #0f3460, 0 0 0 4px #e94560; }
-    .pixel-input {
-      background: #16213e; border: 2px solid #0f3460; color: #eee;
-      font-family: 'Press Start 2P', monospace; font-size: 11px;
-      padding: 6px 8px; text-align: center; width: 70px; border-radius: 4px;
-    }
+    .pixel-input { background: #16213e; border: 2px solid #0f3460; color: #eee; font-family: 'Press Start 2P', monospace; font-size: 11px; padding: 6px 8px; text-align: center; width: 70px; border-radius: 4px; }
     .pixel-input:focus { border-color: #e94560; outline: none; }
-    .pixel-btn {
-      background: #e94560; color: white; border: none; padding: 12px 16px;
-      font-family: 'Press Start 2P', monospace; font-size: 11px;
-      cursor: pointer; text-transform: uppercase; transition: all 0.1s;
-      border-radius: 4px; -webkit-tap-highlight-color: transparent;
-    }
+    .pixel-btn { background: #e94560; color: white; border: none; padding: 12px 16px; font-family: 'Press Start 2P', monospace; font-size: 11px; cursor: pointer; text-transform: uppercase; transition: all 0.1s; border-radius: 4px; -webkit-tap-highlight-color: transparent; }
     .pixel-btn:hover { background: #ff6b81; }
     .pixel-btn:active { transform: scale(0.95); background: #ff6b81; }
-    .pixel-btn-sm {
-      background: #0f3460; color: #aaa; border: 2px solid #0f3460;
-      padding: 8px 6px; font-family: 'Press Start 2P', monospace;
-      font-size: 9px; cursor: pointer; transition: all 0.1s;
-      border-radius: 4px; -webkit-tap-highlight-color: transparent;
-    }
+    .pixel-btn-sm { background: #0f3460; color: #aaa; border: 2px solid #0f3460; padding: 8px 6px; font-family: 'Press Start 2P', monospace; font-size: 9px; cursor: pointer; transition: all 0.1s; border-radius: 4px; -webkit-tap-highlight-color: transparent; }
     .pixel-btn-sm.active { background: #e94560; color: white; border-color: #e94560; }
     .pixel-btn-sm:active { transform: scale(0.95); }
     .glow { animation: glow 2s ease-in-out infinite alternate; }
-    @keyframes glow {
-      from { text-shadow: 0 0 5px #e94560, 0 0 10px #e94560; }
-      to { text-shadow: 0 0 10px #e94560, 0 0 20px #e94560, 0 0 30px #e94560; }
-    }
-    /* Mobile range slider styling */
+    @keyframes glow { from { text-shadow: 0 0 5px #e94560, 0 0 10px #e94560; } to { text-shadow: 0 0 10px #e94560, 0 0 20px #e94560, 0 0 30px #e94560; } }
     input[type="range"] { -webkit-appearance: none; height: 6px; background: #0f3460; border-radius: 3px; }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 22px; height: 22px;
-      background: #e94560; border-radius: 50%; cursor: pointer;
-    }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #e94560; border-radius: 50%; cursor: pointer; }
   </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useRef, useEffect, useCallback, useMemo } = React;
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect, useCallback, useMemo } = React;
 
-    // ============================================================
-    // GOLF PHYSICS ENGINE
-    // ============================================================
+const CLUB_SPECS = {
+  'Driver': { launchAngle: 10.5, spinRate: 2700, rollFactor: 0.15 },
+  '3W': { launchAngle: 11.0, spinRate: 3500, rollFactor: 0.12 },
+  '3i': { launchAngle: 14.0, spinRate: 4200, rollFactor: 0.10 },
+  '4i': { launchAngle: 16.0, spinRate: 4600, rollFactor: 0.09 },
+  '5i': { launchAngle: 18.0, spinRate: 5100, rollFactor: 0.08 },
+  '6i': { launchAngle: 20.0, spinRate: 5800, rollFactor: 0.07 },
+  '7i': { launchAngle: 22.5, spinRate: 6500, rollFactor: 0.065 },
+  '8i': { launchAngle: 25.0, spinRate: 7200, rollFactor: 0.06 },
+  '9i': { launchAngle: 28.0, spinRate: 7800, rollFactor: 0.05 },
+  'PW': { launchAngle: 31.0, spinRate: 8400, rollFactor: 0.04 },
+  '50': { launchAngle: 34.0, spinRate: 9200, rollFactor: 0.03 },
+  '54': { launchAngle: 36.0, spinRate: 9800, rollFactor: 0.025 },
+  '60': { launchAngle: 38.0, spinRate: 10500, rollFactor: 0.02 },
+};
 
-    const CLUB_SPECS = {
-      'Driver':  { launchAngle: 10.5, spinRate: 2700, rollFactor: 0.15 },
-      '3W':      { launchAngle: 11.0, spinRate: 3500, rollFactor: 0.12 },
-      '3i':      { launchAngle: 14.0, spinRate: 4200, rollFactor: 0.10 },
-      '4i':      { launchAngle: 16.0, spinRate: 4600, rollFactor: 0.09 },
-      '5i':      { launchAngle: 18.0, spinRate: 5100, rollFactor: 0.08 },
-      '6i':      { launchAngle: 20.0, spinRate: 5800, rollFactor: 0.07 },
-      '7i':      { launchAngle: 22.5, spinRate: 6500, rollFactor: 0.065 },
-      '8i':      { launchAngle: 25.0, spinRate: 7200, rollFactor: 0.06 },
-      '9i':      { launchAngle: 28.0, spinRate: 7800, rollFactor: 0.05 },
-      'PW':      { launchAngle: 31.0, spinRate: 8400, rollFactor: 0.04 },
-      '50':      { launchAngle: 34.0, spinRate: 9200, rollFactor: 0.03 },
-      '54':      { launchAngle: 36.0, spinRate: 9800, rollFactor: 0.025 },
-      '60':      { launchAngle: 38.0, spinRate: 10500, rollFactor: 0.02 },
+const CLUB_LIST = ['Driver', '3W', '3i', '4i', '5i', '6i', '7i', '8i', '9i', 'PW', '50', '54', '60'];
+
+const DEFAULT_DISTANCES = {
+  'Driver': 270, '3W': 245, '3i': 220, '4i': 210, '5i': 195,
+  '6i': 183, '7i': 172, '8i': 160, '9i': 148, 'PW': 135,
+  '50': 115, '54': 100, '60': 80,
+};
+
+function adjustForElevation(utahYards, elevationFt = 4500) {
+  const densityRatioAtAlt = Math.exp(-elevationFt / 29000);
+  const elasticity = 0.58;
+  const percentLoss = (1 - densityRatioAtAlt) * elasticity;
+  return Math.round(utahYards * (1 - percentLoss));
+}
+
+function getSwingModifiers(power) {
+  switch (power) {
+    case 100: return { distanceMult: 1.0, launchAngleDelta: 0, spinRateDelta: 0 };
+    case 75: return { distanceMult: 0.80, launchAngleDelta: -3, spinRateDelta: 400 };
+    case 50: return { distanceMult: 0.55, launchAngleDelta: -6, spinRateDelta: 200 };
+    default: return { distanceMult: 1.0, launchAngleDelta: 0, spinRateDelta: 0 };
+  }
+}
+
+const WIND_ANGLES = { 'N': 0, 'NE': 45, 'E': 90, 'SE': 135, 'S': 180, 'SW': 225, 'W': 270, 'NW': 315 };
+const WIND_ARROWS = { 'N': '\u2193', 'NE': '\u2199', 'E': '\u2190', 'SE': '\u2196', 'S': '\u2191', 'SW': '\u2197', 'W': '\u2192', 'NW': '\u2198' };
+
+function decomposeWind(direction, speed) {
+  const angleRad = (WIND_ANGLES[direction] * Math.PI) / 180;
+  return { headwind: speed * Math.cos(angleRad), crosswind: -speed * Math.sin(angleRad) };
+}
+
+function calculateShot(club, adjustedCarry, swingPower, windDir, windSpeed) {
+  const specs = CLUB_SPECS[club];
+  const mods = getSwingModifiers(swingPower);
+  const wind = decomposeWind(windDir, windSpeed);
+  const baseCarry = adjustedCarry * mods.distanceMult;
+  const expectedCarry = Math.round(baseCarry);
+  const launchAngle = specs.launchAngle + mods.launchAngleDelta;
+  const spinRate = specs.spinRate + mods.spinRateDelta;
+  const launchRad = (launchAngle * Math.PI) / 180;
+  let windCarryFactor = 1.0;
+  if (wind.headwind > 0) { windCarryFactor = 1 - (wind.headwind * 0.012 + wind.headwind * wind.headwind * 0.0003); }
+  else { windCarryFactor = 1 + Math.abs(wind.headwind) * 0.006; }
+  const carry = Math.max(0, Math.round(baseCarry * windCarryFactor));
+  let apexYards = (carry * Math.tan(launchRad)) / 3.8;
+  if (wind.headwind > 0) apexYards *= (1 + wind.headwind * 0.025);
+  else apexYards *= (1 - Math.abs(wind.headwind) * 0.015);
+  apexYards = Math.max(0, apexYards);
+  const apexFeet = Math.round(apexYards * 3);
+  let descentAngle = launchAngle * 1.4;
+  if (wind.headwind > 0) descentAngle += wind.headwind * 0.8;
+  else descentAngle -= Math.abs(wind.headwind) * 0.5;
+  descentAngle = Math.max(5, Math.min(70, descentAngle));
+  const spinFactor = Math.max(0.1, 1 - spinRate / 15000);
+  const angleFactor = Math.max(0.05, 1 - descentAngle / 80);
+  let roll = carry * specs.rollFactor * spinFactor * angleFactor;
+  if (wind.headwind < 0) roll *= (1 + Math.abs(wind.headwind) * 0.04);
+  if (wind.headwind > 0) roll *= Math.max(0.1, 1 - wind.headwind * 0.06);
+  roll = Math.max(0, Math.round(roll));
+  const total = carry + roll;
+  const lateral = Math.round(wind.crosswind * (carry / 100) * 1.2);
+  const profilePoints = [];
+  const behindPoints = [];
+  const numPoints = 60;
+  let peakT = 0.55;
+  if (wind.headwind > 0) peakT = 0.45;
+  if (wind.headwind < 0) peakT = 0.60;
+  for (let i = 0; i <= numPoints; i++) {
+    const t = i / numPoints;
+    let y;
+    if (t <= peakT) y = apexYards * Math.sin((t / peakT) * (Math.PI / 2));
+    else y = apexYards * Math.cos(((t - peakT) / (1 - peakT)) * (Math.PI / 2));
+    y = Math.max(0, y);
+    profilePoints.push({ x: carry * t, y });
+    behindPoints.push({ x: lateral * t, y });
+  }
+  for (let i = 1; i <= 10; i++) {
+    profilePoints.push({ x: carry + roll * i / 10, y: 0 });
+  }
+  return { club, swingPower, windDir, windSpeed, carry, total, roll, apexFeet, apexYards, lateral, launchAngle, spinRate, descentAngle, profilePoints, behindPoints, expectedCarry };
+}
+
+function drawPixelGolferSide(ctx, x, y, s = 1) {
+  ctx.fillStyle = '#ffcc88'; ctx.fillRect(x + 4*s, y - 24*s, 8*s, 8*s);
+  ctx.fillStyle = '#e94560'; ctx.fillRect(x + 2*s, y - 26*s, 12*s, 4*s); ctx.fillRect(x + 4*s, y - 28*s, 8*s, 2*s);
+  ctx.fillStyle = '#16213e'; ctx.fillRect(x + 2*s, y - 16*s, 12*s, 10*s);
+  ctx.fillStyle = '#0f3460'; ctx.fillRect(x + 2*s, y - 6*s, 5*s, 8*s); ctx.fillRect(x + 9*s, y - 6*s, 5*s, 8*s);
+  ctx.fillStyle = '#333'; ctx.fillRect(x, y + 2*s, 7*s, 3*s); ctx.fillRect(x + 9*s, y + 2*s, 7*s, 3*s);
+  ctx.fillStyle = '#888'; ctx.fillRect(x + 14*s, y - 14*s, 2*s, 20*s);
+  ctx.fillStyle = '#aaa'; ctx.fillRect(x + 12*s, y + 4*s, 6*s, 3*s);
+}
+
+function drawPixelGolferBehind(ctx, x, y, s = 1) {
+  ctx.fillStyle = '#cc9966'; ctx.fillRect(x - 4*s, y - 24*s, 8*s, 8*s);
+  ctx.fillStyle = '#e94560'; ctx.fillRect(x - 6*s, y - 26*s, 12*s, 4*s); ctx.fillRect(x - 4*s, y - 28*s, 8*s, 2*s);
+  ctx.fillStyle = '#16213e'; ctx.fillRect(x - 6*s, y - 16*s, 12*s, 10*s);
+  ctx.fillStyle = '#ffcc88'; ctx.fillRect(x - 8*s, y - 14*s, 2*s, 6*s); ctx.fillRect(x + 6*s, y - 14*s, 2*s, 6*s);
+  ctx.fillStyle = '#0f3460'; ctx.fillRect(x - 6*s, y - 6*s, 5*s, 8*s); ctx.fillRect(x + 1*s, y - 6*s, 5*s, 8*s);
+  ctx.fillStyle = '#333'; ctx.fillRect(x - 7*s, y + 2*s, 6*s, 3*s); ctx.fillRect(x + 1*s, y + 2*s, 6*s, 3*s);
+  ctx.fillStyle = '#888'; ctx.fillRect(x - 1*s, y - 12*s, 2*s, 20*s); ctx.fillRect(x - 3*s, y + 6*s, 6*s, 2*s);
+}
+
+function drawPixelBall(ctx, x, y, r = 3) {
+  ctx.fillStyle = '#fff'; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+
+function useCanvasSize(containerRef) {
+  const [size, setSize] = useState({ w: 360, h: 220 });
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth;
+        const h = Math.min(Math.max(w * 0.55, 180), 320);
+        setSize({ w, h: Math.round(h) });
+      }
     };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return size;
+}
 
-    const CLUB_LIST = ['Driver', '3W', '3i', '4i', '5i', '6i', '7i', '8i', '9i', 'PW', '50', '54', '60'];
-
-    const DEFAULT_DISTANCES = {
-      'Driver': 270, '3W': 245, '3i': 220, '4i': 210, '5i': 195,
-      '6i': 183, '7i': 172, '8i': 160, '9i': 148, 'PW': 135,
-      '50': 115, '54': 100, '60': 80,
-    };
-
-    function adjustForElevation(utahYards, elevationFt = 4500) {
-      const densityRatioAtAlt = Math.exp(-elevationFt / 29000);
-      const elasticity = 0.58;
-      const percentLoss = (1 - densityRatioAtAlt) * elasticity;
-      return Math.round(utahYards * (1 - percentLoss));
-    }
-
-    function getSwingModifiers(power) {
-      switch (power) {
-        case 100: return { distanceMult: 1.0, launchAngleDelta: 0, spinRateDelta: 0 };
-        case 75:  return { distanceMult: 0.80, launchAngleDelta: -3, spinRateDelta: 400 };
-        case 50:  return { distanceMult: 0.55, launchAngleDelta: -6, spinRateDelta: 200 };
-        default:  return { distanceMult: 1.0, launchAngleDelta: 0, spinRateDelta: 0 };
-      }
-    }
-
-    const WIND_ANGLES = { 'N': 0, 'NE': 45, 'E': 90, 'SE': 135, 'S': 180, 'SW': 225, 'W': 270, 'NW': 315 };
-    const WIND_ARROWS = { 'N': '\u2193', 'NE': '\u2199', 'E': '\u2190', 'SE': '\u2196', 'S': '\u2191', 'SW': '\u2197', 'W': '\u2192', 'NW': '\u2198' };
-
-    function decomposeWind(direction, speed) {
-      const angleRad = (WIND_ANGLES[direction] * Math.PI) / 180;
-      return { headwind: speed * Math.cos(angleRad), crosswind: -speed * Math.sin(angleRad) };
-    }
-
-    function calculateShot(club, adjustedCarry, swingPower, windDir, windSpeed) {
-      const specs = CLUB_SPECS[club];
-      const mods = getSwingModifiers(swingPower);
-      const wind = decomposeWind(windDir, windSpeed);
-
-      const baseCarry = adjustedCarry * mods.distanceMult;
-      const launchAngle = specs.launchAngle + mods.launchAngleDelta;
-      const spinRate = specs.spinRate + mods.spinRateDelta;
-      const launchRad = (launchAngle * Math.PI) / 180;
-
-      let windCarryFactor = 1.0;
-      if (wind.headwind > 0) {
-        windCarryFactor = 1 - (wind.headwind * 0.012 + wind.headwind * wind.headwind * 0.0003);
-      } else {
-        windCarryFactor = 1 + Math.abs(wind.headwind) * 0.006;
-      }
-      const carry = Math.max(0, Math.round(baseCarry * windCarryFactor));
-
-      let apexYards = (carry * Math.tan(launchRad)) / 3.8;
-      if (wind.headwind > 0) apexYards *= (1 + wind.headwind * 0.025);
-      else apexYards *= (1 - Math.abs(wind.headwind) * 0.015);
-      apexYards = Math.max(0, apexYards);
-      const apexFeet = Math.round(apexYards * 3);
-
-      let descentAngle = launchAngle * 1.4;
-      if (wind.headwind > 0) descentAngle += wind.headwind * 0.8;
-      else descentAngle -= Math.abs(wind.headwind) * 0.5;
-      descentAngle = Math.max(5, Math.min(70, descentAngle));
-
-      const spinFactor = Math.max(0.1, 1 - spinRate / 15000);
-      const angleFactor = Math.max(0.05, 1 - descentAngle / 80);
-      let roll = carry * specs.rollFactor * spinFactor * angleFactor;
-      if (wind.headwind < 0) roll *= (1 + Math.abs(wind.headwind) * 0.04);
-      if (wind.headwind > 0) roll *= Math.max(0.1, 1 - wind.headwind * 0.06);
-      roll = Math.max(0, Math.round(roll));
-
-      const total = carry + roll;
-      const lateral = Math.round(wind.crosswind * (carry / 100) * 1.2);
-
-      const profilePoints = [];
-      const behindPoints = [];
-      const numPoints = 60;
-      let peakT = 0.55;
-      if (wind.headwind > 0) peakT = 0.45;
-      if (wind.headwind < 0) peakT = 0.60;
-
-      for (let i = 0; i <= numPoints; i++) {
-        const t = i / numPoints;
-        let y;
-        if (t <= peakT) y = apexYards * Math.sin((t / peakT) * (Math.PI / 2));
-        else y = apexYards * Math.cos(((t - peakT) / (1 - peakT)) * (Math.PI / 2));
-        y = Math.max(0, y);
-        profilePoints.push({ x: carry * t, y });
-        behindPoints.push({ x: lateral * t, y });
-      }
-      for (let i = 1; i <= 10; i++) {
-        profilePoints.push({ x: carry + roll * i / 10, y: 0 });
-      }
-
-      return { club, swingPower, windDir, windSpeed, carry, total, roll, apexFeet, apexYards, lateral, launchAngle, spinRate, descentAngle, profilePoints, behindPoints };
-    }
-
-    // ============================================================
-    // PIXEL ART DRAWING
-    // ============================================================
-
-    function drawPixelGolferSide(ctx, x, y, s = 1) {
-      ctx.fillStyle = '#ffcc88';
-      ctx.fillRect(x + 4*s, y - 24*s, 8*s, 8*s);
-      ctx.fillStyle = '#e94560';
-      ctx.fillRect(x + 2*s, y - 26*s, 12*s, 4*s);
-      ctx.fillRect(x + 4*s, y - 28*s, 8*s, 2*s);
-      ctx.fillStyle = '#16213e';
-      ctx.fillRect(x + 2*s, y - 16*s, 12*s, 10*s);
-      ctx.fillStyle = '#0f3460';
-      ctx.fillRect(x + 2*s, y - 6*s, 5*s, 8*s);
-      ctx.fillRect(x + 9*s, y - 6*s, 5*s, 8*s);
-      ctx.fillStyle = '#333';
-      ctx.fillRect(x, y + 2*s, 7*s, 3*s);
-      ctx.fillRect(x + 9*s, y + 2*s, 7*s, 3*s);
-      ctx.fillStyle = '#888';
-      ctx.fillRect(x + 14*s, y - 14*s, 2*s, 20*s);
-      ctx.fillStyle = '#aaa';
-      ctx.fillRect(x + 12*s, y + 4*s, 6*s, 3*s);
-    }
-
-    function drawPixelGolferBehind(ctx, x, y, s = 1) {
-      ctx.fillStyle = '#cc9966';
-      ctx.fillRect(x - 4*s, y - 24*s, 8*s, 8*s);
-      ctx.fillStyle = '#e94560';
-      ctx.fillRect(x - 6*s, y - 26*s, 12*s, 4*s);
-      ctx.fillRect(x - 4*s, y - 28*s, 8*s, 2*s);
-      ctx.fillStyle = '#16213e';
-      ctx.fillRect(x - 6*s, y - 16*s, 12*s, 10*s);
-      ctx.fillStyle = '#ffcc88';
-      ctx.fillRect(x - 8*s, y - 14*s, 2*s, 6*s);
-      ctx.fillRect(x + 6*s, y - 14*s, 2*s, 6*s);
-      ctx.fillStyle = '#0f3460';
-      ctx.fillRect(x - 6*s, y - 6*s, 5*s, 8*s);
-      ctx.fillRect(x + 1*s, y - 6*s, 5*s, 8*s);
-      ctx.fillStyle = '#333';
-      ctx.fillRect(x - 7*s, y + 2*s, 6*s, 3*s);
-      ctx.fillRect(x + 1*s, y + 2*s, 6*s, 3*s);
-      ctx.fillStyle = '#888';
-      ctx.fillRect(x - 1*s, y - 12*s, 2*s, 20*s);
-      ctx.fillRect(x - 3*s, y + 6*s, 6*s, 2*s);
-    }
-
-    function drawPixelBall(ctx, x, y, r = 3) {
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x - r, y - r, r * 2, r * 2);
-    }
-
-    // ============================================================
-    // RESPONSIVE CANVAS HOOK
-    // ============================================================
-
-    function useCanvasSize(containerRef) {
-      const [size, setSize] = useState({ w: 360, h: 220 });
-      useEffect(() => {
-        const update = () => {
-          if (containerRef.current) {
-            const w = containerRef.current.clientWidth;
-            const h = Math.min(Math.max(w * 0.55, 180), 320);
-            setSize({ w, h: Math.round(h) });
-          }
-        };
-        update();
-        window.addEventListener('resize', update);
-        return () => window.removeEventListener('resize', update);
-      }, []);
-      return size;
-    }
-
-    // ============================================================
-    // COMPONENTS
-    // ============================================================
-
-    function ConfigScreen({ onStart }) {
-      const [distances, setDistances] = useState({ ...DEFAULT_DISTANCES });
-
-      const adjustedDistances = useMemo(() => {
-        const adj = {};
-        for (const club of CLUB_LIST) adj[club] = adjustForElevation(distances[club]);
-        return adj;
-      }, [distances]);
-
-      const handleChange = (club, val) => {
-        setDistances(d => ({ ...d, [club]: Math.max(0, Math.min(400, parseInt(val) || 0)) }));
-      };
-
-      const elevLoss = ((1 - adjustForElevation(100) / 100) * 100).toFixed(1);
-      const clubDisplay = (c) => c === '50' ? '50\u00B0' : c === '54' ? '54\u00B0' : c === '60' ? '60\u00B0' : c;
-
-      return (
-        <div className="min-h-screen flex flex-col items-center justify-start p-3 pt-6 sm:justify-center">
-          <h1 className="text-xl sm:text-2xl text-red-400 glow mb-1">PIXEL GOLF</h1>
-          <p className="text-[8px] sm:text-xs text-gray-400 mb-4">Driving Range Simulator</p>
-
-          <div className="pixel-border rounded-lg p-4 sm:p-6 bg-gray-900 w-full max-w-lg">
-            <h2 className="text-[10px] sm:text-sm text-gray-200 mb-1">Club Distances (Utah)</h2>
-            <p className="text-[7px] sm:text-[8px] text-gray-500 mb-3">
-              Enter carry distances in yards (~4,500ft elevation baseline)
-            </p>
-
-            <div className="space-y-1 mb-4">
-              {CLUB_LIST.map(club => (
-                <div key={club} className="flex items-center justify-between py-0.5">
-                  <span className="text-[10px] text-gray-400 w-14">{clubDisplay(club)}</span>
-                  <div className="flex items-center gap-2 flex-1 justify-end">
-                    <input
-                      type="number" className="pixel-input" value={distances[club]}
-                      onChange={e => handleChange(club, e.target.value)}
-                      min="0" max="400"
-                    />
-                    <span className="text-[8px] text-gray-600 w-6">yds</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-gray-700 pt-3 mb-3">
-              <h3 className="text-[9px] text-red-400 mb-2">UTAH {'\u2192'} LOUISIANA ({'\u2248'}{elevLoss}% loss)</h3>
-              <div className="grid grid-cols-1 gap-0.5 max-h-40 overflow-y-auto">
-                {CLUB_LIST.map(club => (
-                  <div key={club} className="flex items-center justify-between text-[9px]">
-                    <span className="text-gray-500 w-14">{clubDisplay(club)}</span>
-                    <span className="text-gray-500">{distances[club]}y</span>
-                    <span className="text-gray-600">{'\u2192'}</span>
-                    <span className="text-green-400 font-bold">{adjustedDistances[club]}y</span>
-                  </div>
-                ))}
+function ConfigScreen({ onStart }) {
+  const [distances, setDistances] = useState({ ...DEFAULT_DISTANCES });
+  const adjustedDistances = useMemo(() => {
+    const adj = {};
+    for (const club of CLUB_LIST) adj[club] = adjustForElevation(distances[club]);
+    return adj;
+  }, [distances]);
+  const handleChange = (club, val) => {
+    setDistances(d => ({ ...d, [club]: Math.max(0, Math.min(400, parseInt(val) || 0)) }));
+  };
+  const elevLoss = ((1 - adjustForElevation(100) / 100) * 100).toFixed(1);
+  const clubDisplay = (c) => c === '50' ? '50\u00B0' : c === '54' ? '54\u00B0' : c === '60' ? '60\u00B0' : c;
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-start p-3 pt-6 sm:justify-center">
+      <h1 className="text-xl sm:text-2xl text-red-400 glow mb-1">PIXEL GOLF</h1>
+      <p className="text-[8px] sm:text-xs text-gray-400 mb-4">Driving Range Simulator</p>
+      <div className="pixel-border rounded-lg p-4 sm:p-6 bg-gray-900 w-full max-w-lg">
+        <h2 className="text-[10px] sm:text-sm text-gray-200 mb-1">Club Distances (Utah)</h2>
+        <p className="text-[7px] sm:text-[8px] text-gray-500 mb-3">Enter carry distances in yards (~4,500ft elevation baseline)</p>
+        <div className="space-y-1 mb-4">
+          {CLUB_LIST.map(club => (
+            <div key={club} className="flex items-center justify-between py-0.5">
+              <span className="text-[10px] text-gray-400 w-14">{clubDisplay(club)}</span>
+              <div className="flex items-center gap-2 flex-1 justify-end">
+                <input type="number" className="pixel-input" value={distances[club]} onChange={e => handleChange(club, e.target.value)} min="0" max="400" />
+                <span className="text-[8px] text-gray-600 w-6">yds</span>
               </div>
             </div>
-
-            <button className="pixel-btn w-full mt-2" onClick={() => onStart(adjustedDistances)}>
-              Start Session
-            </button>
-          </div>
+          ))}
         </div>
-      );
-    }
-
-    function CompassSelector({ selected, onSelect }) {
-      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex flex-wrap justify-center gap-1" style={{ maxWidth: 160 }}>
-            {directions.map(dir => (
-              <button
-                key={dir}
-                type="button"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(dir); }}
-                className={`pixel-btn-sm text-[9px] py-2 px-2 text-center ${selected === dir ? 'active' : ''}`}
-                style={{ minWidth: 34 }}
-              >
-                {dir}
-              </button>
+        <div className="border-t border-gray-700 pt-3 mb-3">
+          <h3 className="text-[9px] text-red-400 mb-2">UTAH {'\u2192'} LOUISIANA ({'\u2248'}{elevLoss}% loss)</h3>
+          <div className="grid grid-cols-1 gap-0.5 max-h-40 overflow-y-auto">
+            {CLUB_LIST.map(club => (
+              <div key={club} className="flex items-center justify-between text-[9px]">
+                <span className="text-gray-500 w-14">{clubDisplay(club)}</span>
+                <span className="text-gray-500">{distances[club]}y</span>
+                <span className="text-gray-600">{'\u2192'}</span>
+                <span className="text-green-400 font-bold">{adjustedDistances[club]}y</span>
+              </div>
             ))}
           </div>
-          <div className="text-lg" style={{ color: '#e94560' }}>{WIND_ARROWS[selected]}</div>
         </div>
-      );
+        <button className="pixel-btn w-full mt-2" onClick={() => onStart(adjustedDistances, distances)}>Start Session</button>
+      </div>
+    </div>
+  );
+}
+
+function CompassSelector({ selected, onSelect }) {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="flex flex-wrap justify-center gap-1" style={{ maxWidth: 160 }}>
+        {directions.map(dir => (
+          <button key={dir} type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(dir); }}
+            className={`pixel-btn-sm text-[9px] py-2 px-2 text-center ${selected === dir ? 'active' : ''}`} style={{ minWidth: 34 }}>
+            {dir}
+          </button>
+        ))}
+      </div>
+      <div className="text-lg" style={{ color: '#e94560' }}>{WIND_ARROWS[selected]}</div>
+    </div>
+  );
+}
+
+function ProfileCanvas({ shotData, animProgress, containerRef }) {
+  const canvasRef = useRef(null);
+  const size = useCanvasSize(containerRef);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size.w * dpr; canvas.height = size.h * dpr;
+    canvas.style.width = size.w + 'px'; canvas.style.height = size.h + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = size.w, H = size.h;
+    ctx.clearRect(0, 0, W, H);
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+    skyGrad.addColorStop(0, '#0a0a2e'); skyGrad.addColorStop(1, '#1a1a4e');
+    ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, H);
+    const groundY = H - 30;
+    ctx.fillStyle = '#1a4a1a'; ctx.fillRect(0, groundY, W, 30);
+    ctx.fillStyle = '#226622';
+    for (let i = 0; i < W; i += 30) ctx.fillRect(i, groundY, 1, 30);
+    const maxRange = 320;
+    const fontSize = Math.max(6, Math.min(8, W / 60));
+    ctx.font = fontSize + "px 'Press Start 2P'";
+    ctx.fillStyle = '#446644';
+    for (let d = 50; d <= 300; d += 50) {
+      const x = 40 + (d / maxRange) * (W - 60);
+      ctx.fillRect(x, groundY - 2, 1, 5);
+      ctx.fillText(d + 'y', x - 10, groundY + 12);
     }
-
-    function ProfileCanvas({ shotData, animProgress, containerRef }) {
-      const canvasRef = useRef(null);
-      const size = useCanvasSize(containerRef);
-
-      useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = size.w * dpr;
-        canvas.height = size.h * dpr;
-        canvas.style.width = size.w + 'px';
-        canvas.style.height = size.h + 'px';
-        const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
-        const W = size.w;
-        const H = size.h;
-
-        ctx.clearRect(0, 0, W, H);
-        const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-        skyGrad.addColorStop(0, '#0a0a2e');
-        skyGrad.addColorStop(1, '#1a1a4e');
-        ctx.fillStyle = skyGrad;
-        ctx.fillRect(0, 0, W, H);
-
-        const groundY = H - 30;
-        ctx.fillStyle = '#1a4a1a';
-        ctx.fillRect(0, groundY, W, 30);
-        ctx.fillStyle = '#226622';
-        for (let i = 0; i < W; i += 30) ctx.fillRect(i, groundY, 1, 30);
-
-        const maxRange = 320;
-        const fontSize = Math.max(6, Math.min(8, W / 60));
-        ctx.font = fontSize + "px 'Press Start 2P'";
-        ctx.fillStyle = '#446644';
-        for (let d = 50; d <= 300; d += 50) {
-          const x = 40 + (d / maxRange) * (W - 60);
-          ctx.fillRect(x, groundY - 2, 1, 5);
-          ctx.fillText(d + 'y', x - 10, groundY + 12);
-        }
-
-        const golferScale = Math.max(0.7, Math.min(1.2, W / 500));
-        drawPixelGolferSide(ctx, 12, groundY, golferScale);
-
-        ctx.fillStyle = '#e94560';
-        ctx.font = fontSize + "px 'Press Start 2P'";
-        ctx.fillText('PROFILE', 6, 12);
-
-        if (!shotData) {
-          ctx.fillStyle = '#555';
-          ctx.font = Math.max(8, W / 45) + "px 'Press Start 2P'";
-          ctx.fillText('Hit a shot!', W / 2 - 50, H / 2);
-          return;
-        }
-
-        const { profilePoints, carry, total, apexYards, apexFeet } = shotData;
-        if (!profilePoints.length) return;
-
-        const maxDist = Math.max(total, carry, 50);
-        const maxHeight = Math.max(apexYards, 5);
-        const scaleX = (W - 60) / Math.max(maxDist, maxRange);
-        const scaleY = (groundY - 20) / (maxHeight * 1.2);
-        const originX = 40;
-
-        // Faded full trail
-        ctx.strokeStyle = 'rgba(233,69,96,0.3)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        profilePoints.forEach((p, i) => {
-          const px = originX + p.x * scaleX, py = groundY - p.y * scaleY;
-          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-        });
-        ctx.stroke();
-
-        const totalPts = profilePoints.length;
-        const currentIdx = Math.min(Math.floor(animProgress * totalPts), totalPts - 1);
-
-        if (animProgress > 0) {
-          ctx.strokeStyle = '#e94560';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          for (let i = 0; i <= currentIdx; i++) {
-            const px = originX + profilePoints[i].x * scaleX;
-            const py = groundY - profilePoints[i].y * scaleY;
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-          }
-          ctx.stroke();
-          const bp = profilePoints[currentIdx];
-          drawPixelBall(ctx, originX + bp.x * scaleX, groundY - bp.y * scaleY, 3);
-        }
-
-        if (animProgress >= 1) {
-          const lf = fontSize - 1;
-          ctx.font = lf + "px 'Press Start 2P'";
-
-          const carryX = originX + carry * scaleX;
-          ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(carryX, groundY); ctx.lineTo(carryX, groundY - 16); ctx.stroke();
-          ctx.setLineDash([]); ctx.fillStyle = '#ffcc00';
-          ctx.fillText('CARRY ' + carry, carryX - 20, groundY - 19);
-
-          const totalX = originX + total * scaleX;
-          ctx.strokeStyle = '#00ccff'; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(totalX, groundY); ctx.lineTo(totalX, groundY - 8); ctx.stroke();
-          ctx.setLineDash([]); ctx.fillStyle = '#00ccff';
-          ctx.fillText('TOTAL ' + total, totalX - 20, groundY - 11);
-
-          let apexPt = profilePoints[0];
-          for (const p of profilePoints) if (p.y > apexPt.y) apexPt = p;
-          const apexX = originX + apexPt.x * scaleX;
-          const apexY2 = groundY - apexPt.y * scaleY;
-          ctx.strokeStyle = '#ff66aa'; ctx.setLineDash([2, 2]);
-          ctx.beginPath(); ctx.moveTo(apexX, apexY2); ctx.lineTo(apexX, apexY2 - 12); ctx.stroke();
-          ctx.setLineDash([]); ctx.fillStyle = '#ff66aa';
-          ctx.fillText('APEX ' + apexFeet + 'ft', apexX - 18, apexY2 - 14);
-        }
-      }, [shotData, animProgress, size]);
-
-      return <canvas ref={canvasRef} className="rounded border border-gray-700 w-full" />;
+    const golferScale = Math.max(0.7, Math.min(1.2, W / 500));
+    drawPixelGolferSide(ctx, 12, groundY, golferScale);
+    ctx.fillStyle = '#e94560';
+    ctx.font = fontSize + "px 'Press Start 2P'";
+    ctx.fillText('PROFILE', 6, 12);
+    if (!shotData) {
+      ctx.fillStyle = '#555';
+      ctx.font = Math.max(8, W / 45) + "px 'Press Start 2P'";
+      ctx.fillText('Hit a shot!', W / 2 - 50, H / 2);
+      return;
     }
+    const { profilePoints, carry, total, apexYards, apexFeet } = shotData;
+    if (!profilePoints.length) return;
+    const maxDist = Math.max(total, carry, 50);
+    const maxHeight = Math.max(apexYards, 5);
+    const scaleX = (W - 60) / Math.max(maxDist, maxRange);
+    const scaleY = (groundY - 20) / (maxHeight * 1.2);
+    const originX = 40;
+    ctx.strokeStyle = 'rgba(233,69,96,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    profilePoints.forEach((p, i) => { const px = originX + p.x * scaleX, py = groundY - p.y * scaleY; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); });
+    ctx.stroke();
+    const totalPts = profilePoints.length;
+    const currentIdx = Math.min(Math.floor(animProgress * totalPts), totalPts - 1);
+    if (animProgress > 0) {
+      ctx.strokeStyle = '#e94560'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= currentIdx; i++) {
+        const px = originX + profilePoints[i].x * scaleX;
+        const py = groundY - profilePoints[i].y * scaleY;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      const bp = profilePoints[currentIdx];
+      drawPixelBall(ctx, originX + bp.x * scaleX, groundY - bp.y * scaleY, 3);
+    }
+    if (animProgress >= 1) {
+      const lf = fontSize - 1;
+      ctx.font = lf + "px 'Press Start 2P'";
+      const carryX = originX + carry * scaleX;
+      ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(carryX, groundY); ctx.lineTo(carryX, groundY - 16); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillText('CARRY ' + carry, carryX - 20, groundY - 19);
+      const totalX = originX + total * scaleX;
+      ctx.strokeStyle = '#00ccff';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(totalX, groundY); ctx.lineTo(totalX, groundY - 8); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#00ccff';
+      ctx.fillText('TOTAL ' + total, totalX - 20, groundY - 11);
+      let apexPt = profilePoints[0];
+      for (const p of profilePoints) if (p.y > apexPt.y) apexPt = p;
+      const apexX = originX + apexPt.x * scaleX;
+      const apexY2 = groundY - apexPt.y * scaleY;
+      ctx.strokeStyle = '#ff66aa';
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath(); ctx.moveTo(apexX, apexY2); ctx.lineTo(apexX, apexY2 - 12); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ff66aa';
+      ctx.fillText('APEX ' + apexFeet + 'ft', apexX - 18, apexY2 - 14);
+    }
+  }, [shotData, animProgress, size]);
+  return <canvas ref={canvasRef} className="rounded border border-gray-700 w-full" />;
+}
 
-    function BehindCanvas({ shotData, animProgress, containerRef }) {
-      const canvasRef = useRef(null);
-      const size = useCanvasSize(containerRef);
+function BehindCanvas({ shotData, animProgress, containerRef }) {
+  const canvasRef = useRef(null);
+  const size = useCanvasSize(containerRef);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size.w * dpr; canvas.height = size.h * dpr;
+    canvas.style.width = size.w + 'px'; canvas.style.height = size.h + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = size.w, H = size.h;
+    ctx.clearRect(0, 0, W, H);
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+    skyGrad.addColorStop(0, '#0a0a2e'); skyGrad.addColorStop(1, '#1a1a4e');
+    ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, H);
+    const groundY = H - 35;
+    ctx.fillStyle = '#1a4a1a'; ctx.fillRect(0, groundY, W, 35);
+    ctx.strokeStyle = '#226622'; ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(W / 2, groundY); ctx.lineTo(W / 2, 20); ctx.stroke();
+    ctx.setLineDash([]);
+    const fontSize = Math.max(6, Math.min(8, W / 60));
+    ctx.font = fontSize + "px 'Press Start 2P'";
+    ctx.fillStyle = '#446644';
+    for (let d = -40; d <= 40; d += 10) {
+      if (d === 0) continue;
+      const x = W / 2 + d * (W / 200);
+      ctx.fillRect(x, groundY - 1, 1, 4);
+      ctx.fillText((d > 0 ? '+' : '') + d, x - 8, groundY + 10);
+    }
+    const golferScale = Math.max(0.7, Math.min(1.2, W / 500));
+    drawPixelGolferBehind(ctx, W / 2, groundY, golferScale);
+    ctx.fillStyle = '#e94560';
+    ctx.font = fontSize + "px 'Press Start 2P'";
+    ctx.fillText('BEHIND', 6, 12);
+    if (!shotData) {
+      ctx.fillStyle = '#555';
+      ctx.font = Math.max(8, W / 45) + "px 'Press Start 2P'";
+      ctx.fillText('Waiting...', W / 2 - 40, H / 2);
+      return;
+    }
+    const { behindPoints, lateral, apexYards, launchAngle: la, expectedCarry, carry } = shotData;
+    if (!behindPoints.length) return;
+    const maxLateral = Math.max(Math.abs(lateral), 30);
+    const maxHeight = Math.max(apexYards, 5);
+    const scaleX = (W - 40) / (maxLateral * 2.5);
+    const scaleY = (groundY - 30) / (maxHeight * 1.2);
+    const originX = W / 2;
+    ctx.strokeStyle = 'rgba(233,69,96,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    behindPoints.forEach((p, i) => { const px = originX + p.x * scaleX, py = groundY - p.y * scaleY; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); });
+    ctx.stroke();
+    const totalPts = behindPoints.length;
+    const currentIdx = Math.min(Math.floor(animProgress * totalPts), totalPts - 1);
+    if (animProgress > 0) {
+      ctx.strokeStyle = '#e94560'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= currentIdx; i++) {
+        const px = originX + behindPoints[i].x * scaleX;
+        const py = groundY - behindPoints[i].y * scaleY;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      const bp = behindPoints[currentIdx];
+      drawPixelBall(ctx, originX + bp.x * scaleX, groundY - bp.y * scaleY, 3);
+    }
+    if (animProgress >= 1) {
+      const lf = fontSize - 1;
+      ctx.font = lf + "px 'Press Start 2P'";
+      ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(originX, groundY); ctx.lineTo(originX, groundY - 40); ctx.stroke();
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillText(la.toFixed(1) + '\u00B0', originX + 3, groundY - 42);
 
-      useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = size.w * dpr;
-        canvas.height = size.h * dpr;
-        canvas.style.width = size.w + 'px';
-        canvas.style.height = size.h + 'px';
-        const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
-        const W = size.w;
-        const H = size.h;
+      // CHANGE 2: Show expected carry and wind adjustment
+      const windDiff = expectedCarry - carry;
+      const textX = W / 2;
+      const textY = 25;
+      ctx.fillStyle = '#ffcc00';
+      ctx.font = lf + "px 'Press Start 2P'";
+      ctx.textAlign = 'center';
+      ctx.fillText(expectedCarry + 'y expected', textX, textY);
 
-        ctx.clearRect(0, 0, W, H);
-        const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-        skyGrad.addColorStop(0, '#0a0a2e');
-        skyGrad.addColorStop(1, '#1a1a4e');
-        ctx.fillStyle = skyGrad;
-        ctx.fillRect(0, 0, W, H);
+      let windColor = '#00ccff';
+      if (windDiff < 0) windColor = '#ff6600';
+      ctx.fillStyle = windColor;
+      ctx.fillText(carry + 'y actual (' + (windDiff >= 0 ? '+' : '') + windDiff + 'y wind)', textX, textY + 12);
+      ctx.textAlign = 'start';
 
-        const groundY = H - 35;
-        ctx.fillStyle = '#1a4a1a';
-        ctx.fillRect(0, groundY, W, 35);
-
-        ctx.strokeStyle = '#226622'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
-        ctx.beginPath(); ctx.moveTo(W / 2, groundY); ctx.lineTo(W / 2, 20); ctx.stroke();
+      if (lateral !== 0) {
+        const lx = originX + lateral * scaleX;
+        ctx.fillStyle = lateral > 0 ? '#00ccff' : '#ff6600';
+        ctx.font = (lf + 1) + "px 'Press Start 2P'";
+        ctx.fillText((lateral > 0 ? 'R ' : 'L ') + Math.abs(lateral) + 'y', lx - 12, 50);
+        ctx.strokeStyle = lateral > 0 ? '#00ccff' : '#ff6600';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath(); ctx.moveTo(lx, 54); ctx.lineTo(lx, groundY - 5); ctx.stroke();
         ctx.setLineDash([]);
-
-        const fontSize = Math.max(6, Math.min(8, W / 60));
-        ctx.font = fontSize + "px 'Press Start 2P'";
-        ctx.fillStyle = '#446644';
-        for (let d = -40; d <= 40; d += 10) {
-          if (d === 0) continue;
-          const x = W / 2 + d * (W / 200);
-          ctx.fillRect(x, groundY - 1, 1, 4);
-          ctx.fillText((d > 0 ? '+' : '') + d, x - 8, groundY + 10);
-        }
-
-        const golferScale = Math.max(0.7, Math.min(1.2, W / 500));
-        drawPixelGolferBehind(ctx, W / 2, groundY, golferScale);
-
-        ctx.fillStyle = '#e94560';
-        ctx.font = fontSize + "px 'Press Start 2P'";
-        ctx.fillText('BEHIND', 6, 12);
-
-        if (!shotData) {
-          ctx.fillStyle = '#555';
-          ctx.font = Math.max(8, W / 45) + "px 'Press Start 2P'";
-          ctx.fillText('Waiting...', W / 2 - 40, H / 2);
-          return;
-        }
-
-        const { behindPoints, lateral, apexYards, launchAngle: la } = shotData;
-        if (!behindPoints.length) return;
-
-        const maxLateral = Math.max(Math.abs(lateral), 30);
-        const maxHeight = Math.max(apexYards, 5);
-        const scaleX = (W - 40) / (maxLateral * 2.5);
-        const scaleY = (groundY - 30) / (maxHeight * 1.2);
-        const originX = W / 2;
-
-        ctx.strokeStyle = 'rgba(233,69,96,0.3)'; ctx.lineWidth = 1;
-        ctx.beginPath();
-        behindPoints.forEach((p, i) => {
-          const px = originX + p.x * scaleX, py = groundY - p.y * scaleY;
-          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-        });
-        ctx.stroke();
-
-        const totalPts = behindPoints.length;
-        const currentIdx = Math.min(Math.floor(animProgress * totalPts), totalPts - 1);
-
-        if (animProgress > 0) {
-          ctx.strokeStyle = '#e94560'; ctx.lineWidth = 2;
-          ctx.beginPath();
-          for (let i = 0; i <= currentIdx; i++) {
-            const px = originX + behindPoints[i].x * scaleX;
-            const py = groundY - behindPoints[i].y * scaleY;
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-          }
-          ctx.stroke();
-          const bp = behindPoints[currentIdx];
-          drawPixelBall(ctx, originX + bp.x * scaleX, groundY - bp.y * scaleY, 3);
-        }
-
-        if (animProgress >= 1) {
-          const lf = fontSize - 1;
-          ctx.font = lf + "px 'Press Start 2P'";
-          ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(originX, groundY); ctx.lineTo(originX, groundY - 40); ctx.stroke();
-          ctx.fillStyle = '#ffcc00';
-          ctx.fillText(la.toFixed(1) + '\u00B0', originX + 3, groundY - 42);
-
-          if (lateral !== 0) {
-            const lx = originX + lateral * scaleX;
-            ctx.fillStyle = lateral > 0 ? '#00ccff' : '#ff6600';
-            ctx.font = (lf + 1) + "px 'Press Start 2P'";
-            ctx.fillText((lateral > 0 ? 'R ' : 'L ') + Math.abs(lateral) + 'y', lx - 12, 22);
-            ctx.strokeStyle = lateral > 0 ? '#00ccff' : '#ff6600';
-            ctx.setLineDash([2, 2]);
-            ctx.beginPath(); ctx.moveTo(lx, 26); ctx.lineTo(lx, groundY - 5); ctx.stroke();
-            ctx.setLineDash([]);
-          }
-        }
-      }, [shotData, animProgress, size]);
-
-      return <canvas ref={canvasRef} className="rounded border border-gray-700 w-full" />;
+      }
     }
+  }, [shotData, animProgress, size]);
+  return <canvas ref={canvasRef} className="rounded border border-gray-700 w-full" />;
+}
 
-    function ShotLog({ shots }) {
-      if (shots.length === 0) return (
-        <div className="text-center text-[8px] text-gray-600 py-4">No shots yet.</div>
-      );
+function ShotLog({ shots }) {
+  if (shots.length === 0) return (<div className="text-center text-[8px] text-gray-600 py-4">No shots yet.</div>);
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[8px] sm:text-[9px] text-gray-300" style={{ minWidth: 320 }}>
+        <thead>
+          <tr className="text-red-400 border-b border-gray-700">
+            <th className="py-1 px-1 text-left">#</th>
+            <th className="py-1 px-1 text-left">Club</th>
+            <th className="py-1 px-1">Pwr</th>
+            <th className="py-1 px-1">Wind</th>
+            <th className="py-1 px-1">Carry</th>
+            <th className="py-1 px-1">Total</th>
+            <th className="py-1 px-1">Apex</th>
+            <th className="py-1 px-1">Lat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {shots.map((s, i) => (
+            <tr key={i} className="border-b border-gray-800">
+              <td className="py-1 px-1 text-gray-600">{shots.length - i}</td>
+              <td className="py-1 px-1 text-yellow-300">{s.club}</td>
+              <td className="py-1 px-1 text-center">{s.swingPower}%</td>
+              <td className="py-1 px-1 text-center">{WIND_ARROWS[s.windDir]} {s.windSpeed}</td>
+              <td className="py-1 px-1 text-center text-green-400">{s.carry}</td>
+              <td className="py-1 px-1 text-center text-cyan-400">{s.total}</td>
+              <td className="py-1 px-1 text-center text-pink-400">{s.apexFeet}ft</td>
+              <td className="py-1 px-1 text-center" style={{ color: s.lateral > 0 ? '#00ccff' : s.lateral < 0 ? '#ff6600' : '#888' }}>
+                {s.lateral === 0 ? '0' : (s.lateral > 0 ? 'R' : 'L') + Math.abs(s.lateral)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
-      return (
-        <div className="overflow-x-auto">
-          <table className="w-full text-[8px] sm:text-[9px] text-gray-300" style={{ minWidth: 320 }}>
-            <thead>
-              <tr className="text-red-400 border-b border-gray-700">
-                <th className="py-1 px-1 text-left">#</th>
-                <th className="py-1 px-1 text-left">Club</th>
-                <th className="py-1 px-1">Pwr</th>
-                <th className="py-1 px-1">Wind</th>
-                <th className="py-1 px-1">Carry</th>
-                <th className="py-1 px-1">Total</th>
-                <th className="py-1 px-1">Apex</th>
-                <th className="py-1 px-1">Lat</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shots.map((s, i) => (
-                <tr key={i} className="border-b border-gray-800">
-                  <td className="py-1 px-1 text-gray-600">{shots.length - i}</td>
-                  <td className="py-1 px-1 text-yellow-300">{s.club}</td>
-                  <td className="py-1 px-1 text-center">{s.swingPower}%</td>
-                  <td className="py-1 px-1 text-center">{WIND_ARROWS[s.windDir]} {s.windSpeed}</td>
-                  <td className="py-1 px-1 text-center text-green-400">{s.carry}</td>
-                  <td className="py-1 px-1 text-center text-cyan-400">{s.total}</td>
-                  <td className="py-1 px-1 text-center text-pink-400">{s.apexFeet}ft</td>
-                  <td className="py-1 px-1 text-center" style={{
-                    color: s.lateral > 0 ? '#00ccff' : s.lateral < 0 ? '#ff6600' : '#888'
-                  }}>
-                    {s.lateral === 0 ? '0' : (s.lateral > 0 ? 'R' : 'L') + Math.abs(s.lateral)}
-                  </td>
-                </tr>
+function DrivingRange({ adjustedDistances, utahDistances }) {
+  const [selectedClub, setSelectedClub] = useState('7i');
+  const [swingPower, setSwingPower] = useState(100);
+  const [windDir, setWindDir] = useState('N');
+  const [windSpeed, setWindSpeed] = useState(0);
+  const [shotData, setShotData] = useState(null);
+  const [animProgress, setAnimProgress] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [shots, setShots] = useState([]);
+  const [activeTab, setActiveTab] = useState('range');
+  const animRef = useRef(null);
+  const canvasContainerRef = useRef(null);
+
+  const hitShot = useCallback(() => {
+    if (isAnimating) return;
+    const carry = adjustedDistances[selectedClub];
+    const result = calculateShot(selectedClub, carry, swingPower, windDir, windSpeed);
+    setShotData(result);
+    setAnimProgress(0);
+    setIsAnimating(true);
+    setActiveTab('range');
+    const startTime = performance.now();
+    const duration = 2000;
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      setAnimProgress(1 - Math.pow(1 - progress, 2));
+      if (progress < 1) animRef.current = requestAnimationFrame(animate);
+      else { setIsAnimating(false); setShots(prev => [result, ...prev]); }
+    };
+    animRef.current = requestAnimationFrame(animate);
+  }, [selectedClub, swingPower, windDir, windSpeed, adjustedDistances, isAnimating]);
+
+  useEffect(() => { return () => { if (animRef.current) cancelAnimationFrame(animRef.current); }; }, []);
+
+  const clubDisplay = (c) => c === '50' ? '50\u00B0' : c === '54' ? '54\u00B0' : c === '60' ? '60\u00B0' : c;
+
+  // CHANGE 1: Compute elevation adjustment inline
+  const elevationDiff = utahDistances ? adjustedDistances[selectedClub] - utahDistances[selectedClub] : 0;
+  const elevationDiffStr = elevationDiff >= 0 ? '' : '\u2212' + Math.abs(elevationDiff) + 'y';
+
+  return (
+    <div className="h-screen flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
+        <h1 className="text-[10px] sm:text-sm text-red-400">PIXEL GOLF</h1>
+        <span className="text-[7px] sm:text-[8px] text-gray-500">Louisiana Session</span>
+      </div>
+      <div className="sm:hidden flex border-b border-gray-700 bg-gray-900 shrink-0">
+        {[['range', 'Range'], ['controls', 'Controls'], ['log', 'Log (' + shots.length + ')']].map(([key, label]) => (
+          <button key={key} className={`flex-1 py-2 text-[8px] text-center transition-colors ${activeTab === key ? 'text-red-400 border-b-2 border-red-400 bg-gray-800' : 'text-gray-500'}`}
+            onClick={() => setActiveTab(key)} style={{ fontFamily: "'Press Start 2P', monospace" }}>{label}</button>
+        ))}
+      </div>
+      <div className="flex-1 flex overflow-hidden">
+        <div className={`bg-gray-900 border-r border-gray-700 p-3 flex flex-col gap-3 overflow-y-auto shrink-0 ${activeTab === 'controls' ? 'flex w-full' : 'hidden'} sm:flex sm:w-56`}>
+          <div>
+            <label className="text-[8px] text-gray-500 mb-1 block">CLUB SELECT</label>
+            <div className="grid grid-cols-4 sm:grid-cols-3 gap-1">
+              {CLUB_LIST.map(club => (
+                <button key={club} className={`pixel-btn-sm text-[8px] ${selectedClub === club ? 'active' : ''}`}
+                  onClick={() => setSelectedClub(club)}>{clubDisplay(club)}</button>
               ))}
-            </tbody>
-          </table>
+            </div>
+            <div className="text-[9px] text-gray-400 mt-1 text-center">
+              {clubDisplay(selectedClub)}: {adjustedDistances[selectedClub]}y carry {elevationDiffStr && <span className="text-orange-400">({elevationDiffStr})</span>}
+            </div>
+          </div>
+          <div>
+            <label className="text-[8px] text-gray-500 mb-1 block">SWING POWER</label>
+            <div className="flex gap-1">
+              {[50, 75, 100].map(p => (
+                <button key={p} className={`pixel-btn-sm flex-1 text-[9px] ${swingPower === p ? 'active' : ''}`}
+                  onClick={() => setSwingPower(p)}>{p}%</button>
+              ))}
+            </div>
+            <div className="text-[7px] text-gray-600 mt-1 text-center">
+              {swingPower === 100 ? 'Full swing' : swingPower === 75 ? 'Flighted (-3\u00B0)' : 'Pitch/Punch (-6\u00B0)'}
+            </div>
+          </div>
+          <div>
+            <label className="text-[8px] text-gray-500 mb-1 block">WIND (from)</label>
+            <div className="flex items-center gap-3 justify-center">
+              <CompassSelector selected={windDir} onSelect={setWindDir} />
+              <div className="flex flex-col items-center gap-1">
+                <input type="range" min="0" max="30" value={windSpeed} onChange={e => setWindSpeed(parseInt(e.target.value))} className="w-20" />
+                <div className="text-[10px] text-gray-300">{windSpeed} MPH</div>
+              </div>
+            </div>
+          </div>
+          <button className="pixel-btn w-full text-sm py-4" onClick={hitShot} disabled={isAnimating} style={{ opacity: isAnimating ? 0.5 : 1 }}>
+            {isAnimating ? 'IN FLIGHT...' : 'HIT SHOT'}
+          </button>
+          {shotData && animProgress >= 1 && (
+            <div className="pixel-border rounded p-2 text-[8px]">
+              <div className="text-gray-500 mb-1">LAST SHOT</div>
+              <div className="grid grid-cols-2 gap-1">
+                <span className="text-gray-500">Carry:</span><span className="text-green-400">{shotData.carry}y</span>
+                <span className="text-gray-500">Total:</span><span className="text-cyan-400">{shotData.total}y</span>
+                <span className="text-gray-500">Apex:</span><span className="text-pink-400">{shotData.apexFeet}ft</span>
+                <span className="text-gray-500">Launch:</span><span className="text-yellow-300">{shotData.launchAngle.toFixed(1)}{'\u00B0'}</span>
+                <span className="text-gray-500">Spin:</span><span className="text-orange-400">{shotData.spinRate}rpm</span>
+                <span className="text-gray-500">Roll:</span><span className="text-gray-300">{shotData.roll}y</span>
+              </div>
+            </div>
+          )}
         </div>
-      );
-    }
-
-    // --- Main Driving Range (mobile-first layout) ---
-    function DrivingRange({ adjustedDistances }) {
-      const [selectedClub, setSelectedClub] = useState('7i');
-      const [swingPower, setSwingPower] = useState(100);
-      const [windDir, setWindDir] = useState('N');
-      const [windSpeed, setWindSpeed] = useState(0);
-      const [shotData, setShotData] = useState(null);
-      const [animProgress, setAnimProgress] = useState(0);
-      const [isAnimating, setIsAnimating] = useState(false);
-      const [shots, setShots] = useState([]);
-      const [activeTab, setActiveTab] = useState('range'); // 'range', 'controls', 'log'
-      const animRef = useRef(null);
-      const canvasContainerRef = useRef(null);
-
-      const hitShot = useCallback(() => {
-        if (isAnimating) return;
-        const carry = adjustedDistances[selectedClub];
-        const result = calculateShot(selectedClub, carry, swingPower, windDir, windSpeed);
-        setShotData(result);
-        setAnimProgress(0);
-        setIsAnimating(true);
-        setActiveTab('range');
-
-        const startTime = performance.now();
-        const duration = 2000;
-        const animate = (now) => {
-          const elapsed = now - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          setAnimProgress(1 - Math.pow(1 - progress, 2));
-          if (progress < 1) animRef.current = requestAnimationFrame(animate);
-          else { setIsAnimating(false); setShots(prev => [result, ...prev]); }
-        };
-        animRef.current = requestAnimationFrame(animate);
-      }, [selectedClub, swingPower, windDir, windSpeed, adjustedDistances, isAnimating]);
-
-      useEffect(() => {
-        return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
-      }, []);
-
-      const clubDisplay = (c) => c === '50' ? '50\u00B0' : c === '54' ? '54\u00B0' : c === '60' ? '60\u00B0' : c;
-
-      // Desktop: side-by-side layout. Mobile: tabbed layout.
-      return (
-        <div className="h-screen flex flex-col overflow-hidden">
-          {/* Top Bar */}
-          <div className="flex items-center justify-between px-3 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
-            <h1 className="text-[10px] sm:text-sm text-red-400">PIXEL GOLF</h1>
-            <span className="text-[7px] sm:text-[8px] text-gray-500">Louisiana Session</span>
-          </div>
-
-          {/* Mobile Tab Bar */}
-          <div className="sm:hidden flex border-b border-gray-700 bg-gray-900 shrink-0">
-            {[['range', 'Range'], ['controls', 'Controls'], ['log', 'Log (' + shots.length + ')']].map(([key, label]) => (
-              <button
-                key={key}
-                className={`flex-1 py-2 text-[8px] text-center transition-colors ${activeTab === key ? 'text-red-400 border-b-2 border-red-400 bg-gray-800' : 'text-gray-500'}`}
-                onClick={() => setActiveTab(key)}
-                style={{ fontFamily: "'Press Start 2P', monospace" }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Desktop: flex row. Mobile: show active tab only */}
-          <div className="flex-1 flex overflow-hidden">
-
-            {/* Controls Panel - always visible on desktop, tab on mobile */}
-            <div className={`bg-gray-900 border-r border-gray-700 p-3 flex flex-col gap-3 overflow-y-auto shrink-0
-              ${activeTab === 'controls' ? 'flex w-full' : 'hidden'} sm:flex sm:w-56`}
-            >
-              {/* Club Selector */}
-              <div>
-                <label className="text-[8px] text-gray-500 mb-1 block">CLUB SELECT</label>
-                <div className="grid grid-cols-4 sm:grid-cols-3 gap-1">
-                  {CLUB_LIST.map(club => (
-                    <button
-                      key={club}
-                      className={`pixel-btn-sm text-[8px] ${selectedClub === club ? 'active' : ''}`}
-                      onClick={() => setSelectedClub(club)}
-                    >
-                      {clubDisplay(club)}
-                    </button>
-                  ))}
-                </div>
-                <div className="text-[9px] text-gray-400 mt-1 text-center">
-                  {clubDisplay(selectedClub)}: {adjustedDistances[selectedClub]}y carry
-                </div>
-              </div>
-
-              {/* Swing Power */}
-              <div>
-                <label className="text-[8px] text-gray-500 mb-1 block">SWING POWER</label>
-                <div className="flex gap-1">
-                  {[50, 75, 100].map(p => (
-                    <button
-                      key={p}
-                      className={`pixel-btn-sm flex-1 text-[9px] ${swingPower === p ? 'active' : ''}`}
-                      onClick={() => setSwingPower(p)}
-                    >
-                      {p}%
-                    </button>
-                  ))}
-                </div>
-                <div className="text-[7px] text-gray-600 mt-1 text-center">
-                  {swingPower === 100 ? 'Full swing' : swingPower === 75 ? 'Flighted (-3\u00B0)' : 'Pitch/Punch (-6\u00B0)'}
-                </div>
-              </div>
-
-              {/* Wind */}
-              <div>
-                <label className="text-[8px] text-gray-500 mb-1 block">WIND (from)</label>
-                <div className="flex items-center gap-3 justify-center">
-                  <CompassSelector selected={windDir} onSelect={setWindDir} />
-                  <div className="flex flex-col items-center gap-1">
-                    <input
-                      type="range" min="0" max="30" value={windSpeed}
-                      onChange={e => setWindSpeed(parseInt(e.target.value))}
-                      className="w-20"
-                    />
-                    <div className="text-[10px] text-gray-300">{windSpeed} MPH</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Hit Button */}
-              <button
-                className="pixel-btn w-full text-sm py-4"
-                onClick={hitShot}
-                disabled={isAnimating}
-                style={{ opacity: isAnimating ? 0.5 : 1 }}
-              >
-                {isAnimating ? 'IN FLIGHT...' : 'HIT SHOT'}
-              </button>
-
-              {/* Quick Stats */}
-              {shotData && animProgress >= 1 && (
-                <div className="pixel-border rounded p-2 text-[8px]">
-                  <div className="text-gray-500 mb-1">LAST SHOT</div>
-                  <div className="grid grid-cols-2 gap-1">
-                    <span className="text-gray-500">Carry:</span>
-                    <span className="text-green-400">{shotData.carry}y</span>
-                    <span className="text-gray-500">Total:</span>
-                    <span className="text-cyan-400">{shotData.total}y</span>
-                    <span className="text-gray-500">Apex:</span>
-                    <span className="text-pink-400">{shotData.apexFeet}ft</span>
-                    <span className="text-gray-500">Launch:</span>
-                    <span className="text-yellow-300">{shotData.launchAngle.toFixed(1)}{'\u00B0'}</span>
-                    <span className="text-gray-500">Spin:</span>
-                    <span className="text-orange-400">{shotData.spinRate}rpm</span>
-                    <span className="text-gray-500">Roll:</span>
-                    <span className="text-gray-300">{shotData.roll}y</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Canvas Views - always visible on desktop, tab on mobile */}
-            <div
-              ref={canvasContainerRef}
-              className={`flex-1 flex flex-col items-stretch bg-gray-950 p-2 gap-2 overflow-auto
-                ${activeTab === 'range' ? 'flex' : 'hidden'} sm:flex`}
-            >
-              <ProfileCanvas shotData={shotData} animProgress={animProgress} containerRef={canvasContainerRef} />
-              <BehindCanvas shotData={shotData} animProgress={animProgress} containerRef={canvasContainerRef} />
-
-              {/* Mobile: inline hit button on range tab for quick access */}
-              <div className="sm:hidden flex gap-2 mt-1">
-                <button
-                  className="pixel-btn flex-1 py-3 text-[9px]"
-                  onClick={hitShot}
-                  disabled={isAnimating}
-                  style={{ opacity: isAnimating ? 0.5 : 1 }}
-                >
-                  {isAnimating ? 'IN FLIGHT...' : 'HIT SHOT'}
-                </button>
-                <div className="text-[8px] text-gray-500 flex items-center gap-1">
-                  <span className="text-yellow-300">{clubDisplay(selectedClub)}</span>
-                  <span>{swingPower}%</span>
-                  <span>{WIND_ARROWS[windDir]}{windSpeed > 0 ? windSpeed : ''}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Shot Log - always visible on desktop, tab on mobile */}
-            <div className={`bg-gray-900 border-l border-gray-700 p-2 flex flex-col overflow-y-auto
-              ${activeTab === 'log' ? 'flex w-full' : 'hidden'} sm:flex sm:w-72`}
-            >
-              <div className="text-[9px] text-red-400 border-b border-gray-700 pb-1 mb-1 flex justify-between">
-                <span>SHOT LOG</span>
-                <span className="text-gray-600">{shots.length} shots</span>
-              </div>
-              <ShotLog shots={shots} />
+        <div ref={canvasContainerRef} className={`flex-1 flex flex-col items-stretch bg-gray-950 p-2 gap-2 overflow-auto ${activeTab === 'range' ? 'flex' : 'hidden'} sm:flex`}>
+          <ProfileCanvas shotData={shotData} animProgress={animProgress} containerRef={canvasContainerRef} />
+          <BehindCanvas shotData={shotData} animProgress={animProgress} containerRef={canvasContainerRef} />
+          <div className="sm:hidden flex gap-2 mt-1">
+            <button className="pixel-btn flex-1 py-3 text-[9px]" onClick={hitShot} disabled={isAnimating} style={{ opacity: isAnimating ? 0.5 : 1 }}>
+              {isAnimating ? 'IN FLIGHT...' : 'HIT SHOT'}
+            </button>
+            <div className="text-[8px] text-gray-500 flex items-center gap-1">
+              <span className="text-yellow-300">{clubDisplay(selectedClub)}</span>
+              <span>{swingPower}%</span>
+              <span>{WIND_ARROWS[windDir]}{windSpeed > 0 ? windSpeed : ''}</span>
             </div>
           </div>
         </div>
-      );
-    }
+        <div className={`bg-gray-900 border-l border-gray-700 p-2 flex flex-col overflow-y-auto ${activeTab === 'log' ? 'flex w-full' : 'hidden'} sm:flex sm:w-72`}>
+          <div className="text-[9px] text-red-400 border-b border-gray-700 pb-1 mb-1 flex justify-between">
+            <span>SHOT LOG</span><span className="text-gray-600">{shots.length} shots</span>
+          </div>
+          <ShotLog shots={shots} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-    function App() {
-      const [phase, setPhase] = useState('config');
-      const [adjustedDistances, setAdjustedDistances] = useState(null);
+function App() {
+  const [phase, setPhase] = useState('config');
+  const [adjustedDistances, setAdjustedDistances] = useState(null);
+  const [utahDistances, setUtahDistances] = useState(null);
+  return phase === 'config' ? <ConfigScreen onStart={(adj, utah) => { setAdjustedDistances(adj); setUtahDistances(utah); setPhase('range'); }} />
+    : <DrivingRange adjustedDistances={adjustedDistances} utahDistances={utahDistances} />;
+}
 
-      return phase === 'config'
-        ? <ConfigScreen onStart={(d) => { setAdjustedDistances(d); setPhase('range'); }} />
-        : <DrivingRange adjustedDistances={adjustedDistances} />;
-    }
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
