@@ -13,9 +13,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 from . import freethrows, games, ffmpeg_utils
 
@@ -28,6 +31,41 @@ def _load_config(root: Path, name: str) -> dict:
     if not cfg_path.exists():
         raise FileNotFoundError(f"config not found: {cfg_path}")
     return json.loads(cfg_path.read_text())
+
+
+def _expand(path_str: str) -> Path:
+    return Path(os.path.expanduser(os.path.expandvars(path_str)))
+
+
+def _post_process(output_file: Path, config: dict) -> None:
+    """Auto-open the output and/or mirror it to a sync folder.
+
+    Both behaviors are opt-in via the `output` config block:
+      - "auto_open": true     -> `open <file>` on macOS, `xdg-open` on Linux
+      - "mirror_to": "<path>" -> copy the finished file to this directory
+                                 (e.g. an iCloud Drive folder for phone access)
+    """
+    out_cfg = config.get("output", {})
+
+    mirror_to = out_cfg.get("mirror_to")
+    if mirror_to:
+        dest_dir = _expand(mirror_to)
+        try:
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            dest_file = dest_dir / output_file.name
+            shutil.copy2(output_file, dest_file)
+            print(f"  mirrored to {dest_file}")
+        except OSError as e:
+            print(f"  mirror_to failed ({mirror_to}): {e}", file=sys.stderr)
+
+    if out_cfg.get("auto_open", False):
+        try:
+            if sys.platform == "darwin":
+                subprocess.run(["open", str(output_file)], check=False)
+            elif sys.platform.startswith("linux"):
+                subprocess.run(["xdg-open", str(output_file)], check=False)
+        except FileNotFoundError:
+            pass
 
 
 def _classify(root: Path, video: Path) -> str:
@@ -61,10 +99,9 @@ def cmd_process(args: argparse.Namespace) -> int:
     video = Path(args.file).resolve()
     mode = _classify(root, video)
     config = _load_config(root, mode)
-    if mode == "games":
-        games.process(video, config, root)
-    else:
-        freethrows.process(video, config, root)
+    module = games if mode == "games" else freethrows
+    out = module.process(video, config, root)
+    _post_process(out, config)
     return 0
 
 
@@ -77,7 +114,8 @@ def cmd_process_all(args: argparse.Namespace) -> int:
         for video in _iter_videos(root / "inbox" / mode):
             print(f"\n=== Processing {mode}: {video.name} ===")
             try:
-                module.process(video, config, root)
+                out = module.process(video, config, root)
+                _post_process(out, config)
                 found += 1
             except Exception as e:
                 print(f"  ERROR: {e}", file=sys.stderr)

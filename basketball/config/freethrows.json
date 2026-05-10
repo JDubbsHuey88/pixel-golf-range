@@ -40,6 +40,9 @@
     "video_codec": "libx264",
     "audio_codec": "aac",
     "preset": "medium",
-    "crf": 20
+    "crf": 20,
+    "auto_open": true,
+    "mirror_to": null,
+    "_mirror_to_help": "Set to a folder path (e.g. ~/Library/Mobile Documents/com~apple~CloudDocs/Eagle) to also copy finished reels there for phone access via iCloud Drive."
   }
 }

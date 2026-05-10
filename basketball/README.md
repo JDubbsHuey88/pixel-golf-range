@@ -100,6 +100,26 @@ The output is portrait 9:16 with:
 
 Skips files that have no `.shots.txt` sidecar and prints an error.
 
+## Watching the output
+
+When processing finishes, eagle does two things you can configure in
+`output.auto_open` and `output.mirror_to`:
+
+- **`auto_open: true`** (default on) — opens the finished file in
+  QuickTime on macOS (`open <file>`), or `xdg-open` on Linux. If you're
+  sitting at the Mac mini, the reel pops up immediately.
+
+- **`mirror_to: "<path>"`** (default off) — also copies the finished
+  file to that folder. Point it at an iCloud Drive folder and the reel
+  syncs to your phone within seconds. Example:
+
+  ```json
+  "mirror_to": "~/Library/Mobile Documents/com~apple~CloudDocs/Eagle"
+  ```
+
+  Then on your phone open the Files app → iCloud Drive → Eagle to watch.
+  Other syncing folders work the same way (Dropbox, Google Drive, etc.).
+
 ## Tweaking parameters
 
 Open `config/games.json` or `config/freethrows.json`. Every clip-window,
@@ -114,6 +134,8 @@ touching code. Key knobs:
 | freethrows.json | `speed_ramp.between_shots_multiplier` | 2.5 |
 | freethrows.json | `speed_ramp.normal_window_*` | 2 / 3 |
 | freethrows.json | `output.orientation` | portrait_9_16 |
+| both | `output.auto_open` | true |
+| both | `output.mirror_to` | null |
 
 ## v1 limitations (known and intentional)
 
