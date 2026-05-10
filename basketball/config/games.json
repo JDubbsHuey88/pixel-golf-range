@@ -1,0 +1,36 @@
+{
+  "clip_window_seconds": {
+    "before": 5,
+    "after": 2
+  },
+  "title_card": {
+    "show_date": true,
+    "duration_seconds": 2.5,
+    "background_color": "black",
+    "text_color": "white",
+    "date_format": "%B %d, %Y",
+    "date_source": "filename_or_mtime"
+  },
+  "music": {
+    "mode": "random_from_folder",
+    "folder": "assets/music",
+    "volume_db": -6,
+    "duck_under_original": true,
+    "fade_in_seconds": 0.5,
+    "fade_out_seconds": 1.0
+  },
+  "output": {
+    "folder": "output/games",
+    "format": "mp4",
+    "preserve_source_orientation": true,
+    "video_codec": "libx264",
+    "audio_codec": "aac",
+    "preset": "medium",
+    "crf": 20
+  },
+  "marking": {
+    "tool": "manual",
+    "sidecar_extension": ".shots.txt",
+    "comment": "Drop a video in inbox/games/. Run `eagle mark <file>` to interactively mark made-basket timestamps, or hand-edit the sidecar .shots.txt file with one timestamp per line in HH:MM:SS or seconds format."
+  }
+}
