@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Learning Range</title>
+<style>
+  :root{
+    --bg:#0f1226; --panel:#1a1f3d; --panel2:#232a52; --ink:#eef1ff; --muted:#9aa3d4;
+    --accent:#6c8cff; --accent2:#46e0b0; --gold:#ffd24d; --danger:#ff6b81; --ok:#46e0b0;
+    --beg:#3ddc97; --mid:#ffd24d; --hard:#ff9f43; --exp:#ff6b81;
+    --radius:16px; --shadow:0 8px 24px rgba(0,0,0,.35);
+    font-family:'Trebuchet MS',Verdana,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(160deg,#0f1226,#161a35 60%,#1b1f44);color:var(--ink);min-height:100vh}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(0,0,0,.25);position:sticky;top:0;z-index:10;backdrop-filter:blur(6px)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:bold;font-size:20px;letter-spacing:.5px}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-size:18px}
+  .modes{display:flex;gap:8px}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;padding:10px 14px;font-weight:bold;color:var(--ink);background:var(--panel2);transition:.15s;font-size:14px}
+  button:hover{transform:translateY(-1px);filter:brightness(1.1)}
+  button.primary{background:linear-gradient(135deg,var(--accent),#8aa2ff);color:#0b0e22}
+  button.good{background:linear-gradient(135deg,var(--ok),#7af0c9);color:#063b2c}
+  button.warn{background:linear-gradient(135deg,var(--danger),#ff97a8);color:#3b0612}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,.18)}
+  button.sm{padding:6px 10px;font-size:13px}
+  main{max-width:980px;margin:0 auto;padding:18px}
+  .view{display:none;animation:fade .25s}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h1,h2,h3{margin:.2em 0 .5em}
+  .grid{display:grid;gap:14px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  .card{background:var(--panel);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.05)}
+  .card.click{cursor:pointer}
+  .card.click:hover{border-color:var(--accent);transform:translateY(-2px);transition:.15s}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:bold;color:#0b0e22}
+  .topic{background:var(--panel2);color:var(--muted);font-weight:normal}
+  .muted{color:var(--muted)}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .between{justify-content:space-between}
+  .balance{font-size:30px;font-weight:bold;color:var(--gold)}
+  .kid-tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px;background:var(--panel);border-radius:var(--radius);cursor:pointer;border:2px solid transparent;box-shadow:var(--shadow)}
+  .kid-tile:hover{border-color:var(--accent)}
+  .avatar{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-size:40px;background:linear-gradient(135deg,var(--panel2),#33407a)}
+  input,textarea,select{font-family:inherit;background:var(--panel2);border:1px solid rgba(255,255,255,.12);color:var(--ink);border-radius:10px;padding:10px;font-size:14px;width:100%}
+  textarea{min-height:80px;resize:vertical}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  .steps{display:flex;gap:8px;margin:14px 0}
+  .step{flex:1;text-align:center;padding:10px;border-radius:10px;background:var(--panel2);font-size:13px;opacity:.5}
+  .step.done{opacity:1;background:linear-gradient(135deg,var(--ok),#7af0c9);color:#063b2c}
+  .step.current{opacity:1;background:linear-gradient(135deg,var(--accent),#8aa2ff);color:#0b0e22}
+  .q{background:var(--panel2);border-radius:12px;padding:14px;margin:10px 0}
+  .opt{display:block;width:100%;text-align:left;background:var(--panel);margin:6px 0;border:1px solid rgba(255,255,255,.1)}
+  .opt.sel{border-color:var(--accent);background:#26305e}
+  .opt.correct{border-color:var(--ok);background:#143b32}
+  .opt.wrong{border-color:var(--danger);background:#3a1620}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{background:var(--panel2)}
+  .tab.active{background:linear-gradient(135deg,var(--accent),#8aa2ff);color:#0b0e22}
+  .badge{font-size:12px;background:var(--danger);color:#fff;border-radius:999px;padding:1px 8px;margin-left:6px}
+  .ledger-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .pos{color:var(--ok)} .neg{color:var(--gold)}
+  .empty{padding:30px;text-align:center;color:var(--muted)}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:18px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--panel);border-radius:var(--radius);padding:20px;max-width:560px;width:100%;max-height:90vh;overflow:auto;box-shadow:var(--shadow)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent2);color:#063b2c;padding:12px 20px;border-radius:12px;font-weight:bold;box-shadow:var(--shadow);z-index:100;opacity:0;transition:.3s}
+  .toast.show{opacity:1}
+  .proof-img{max-width:120px;border-radius:10px;margin-top:6px}
+  .tiny{font-size:12px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">AI</div> AI Learning Range</div>
+  <div class="modes">
+    <button id="btnKid" class="primary sm" onclick="goKidPicker()">Kid Mode</button>
+    <button id="btnParent" class="ghost sm" onclick="parentEntry()">Parent</button>
+  </div>
+</header>
+<main>
+  <!-- KID PICKER -->
+  <section id="view-pick" class="view active">
+    <h1>Who's learning today?</h1>
+    <div id="kidPicker" class="grid cards"></div>
+  </section>
+
+  <!-- KID HOME -->
+  <section id="view-kidhome" class="view">
+    <div class="row between">
+      <div class="row"><div class="avatar" id="khAvatar" style="width:54px;height:54px;font-size:30px"></div>
+        <div><h2 id="khName" style="margin:0"></h2><span class="muted tiny">Level <b id="khLevel"></b></span></div>
+      </div>
+      <div style="text-align:right"><div class="tiny muted">Money earned</div><div class="balance" id="khBalance"></div></div>
+    </div>
+    <div id="khInProgress"></div>
+    <h3>Pick a podcast</h3>
+    <div class="row" style="margin-bottom:10px">
+      <select id="filterDiff" onchange="renderKidHome()" style="max-width:220px">
+        <option value="all">All levels</option>
+        <option value="beg">Beginner (1-3)</option>
+        <option value="mid">Intermediate (4-6)</option>
+        <option value="hard">Advanced (7-8)</option>
+        <option value="exp">Expert (9-10)</option>
+      </select>
+    </div>
+    <div id="kidLibrary" class="grid cards"></div>
+  </section>
+
+  <!-- PODCAST DETAIL / LOOP -->
+  <section id="view-loop" class="view">
+    <button class="ghost sm" onclick="renderKidHome();show('kidhome')">&larr; Back</button>
+    <div id="loopBody"></div>
+  </section>
+
+  <!-- PARENT GATE -->
+  <section id="view-gate" class="view">
+    <div class="card" style="max-width:340px;margin:40px auto;text-align:center">
+      <h2>Parent PIN</h2>
+      <input id="pinInput" type="password" inputmode="numeric" placeholder="Enter PIN" style="text-align:center;font-size:22px;letter-spacing:6px" onkeydown="if(event.key==='Enter')checkPin()" />
+      <p id="pinErr" class="tiny" style="color:var(--danger);height:16px"></p>
+      <button class="primary" style="width:100%" onclick="checkPin()">Unlock</button>
+      <p class="tiny muted">Default PIN is 1234 — change it in Settings.</p>
+    </div>
+  </section>
+
+  <!-- PARENT DASHBOARD -->
+  <section id="view-parent" class="view">
+    <div class="tabs">
+      <button class="tab active" data-tab="approvals" onclick="parentTab('approvals')">Approvals <span id="apprBadge" class="badge" style="display:none">0</span></button>
+      <button class="tab" data-tab="podcasts" onclick="parentTab('podcasts')">Podcasts</button>
+      <button class="tab" data-tab="kids" onclick="parentTab('kids')">Kids</button>
+      <button class="tab" data-tab="reports" onclick="parentTab('reports')">Reports</button>
+      <button class="tab" data-tab="settings" onclick="parentTab('settings')">Settings</button>
+    </div>
+    <div id="parentBody"></div>
+  </section>
+</main>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- State ---------------- */
+const KEY='air_state_v1';
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>'$'+Number(n||0).toFixed(2);
+const now=()=>Date.now();
+
+function seed(){
+  return {
+    pin:'1234',
+    config:{ passThreshold:70, listen:0.50, quizBase:1, quizPerDiff:0.20, challengeBase:2, challengePerDiff:0.30 },
+    kids:[
+      {id:uid(),name:'Kid One',emoji:'🦊',level:1},
+      {id:uid(),name:'Kid Two',emoji:'🐼',level:1}
+    ],
+    podcasts:[
+      sample('But Why: A Podcast for Curious Kids','What is Artificial Intelligence?',2,
+        'A gentle intro to what AI is and where kids already see it. Paste the specific episode link in the URL field.'),
+      sample('Brains On!','How do robots and computers learn?',3,
+        'Explains how machines learn from examples. Paste the specific episode link.'),
+      sample('Tumble Science Podcast','Machine learning, explained for kids',4,
+        'How computers find patterns in data. Paste the specific episode link.'),
+      sampleAdv('Hard Fork (NYT)','AI in the news this week',7,
+        'For older kids — current events in AI. Paste the specific episode link.')
+    ],
+    activities:[],
+    ledger:[]
+  };
+}
+function baseQuiz(){return [
+  {type:'mc',q:"What does 'AI' stand for?",options:['Artificial Intelligence','Automatic Internet','Animal Instinct','Advanced Input'],correct:0},
+  {type:'mc',q:'How do many AI systems learn to do a task?',options:['By being given lots of examples to learn from','By being born knowing everything','By guessing randomly forever','They never learn'],correct:0},
+  {type:'mc',q:'True or false: AI can sometimes make mistakes.',options:['True','False'],correct:0},
+  {type:'short',q:'In your own words, name ONE thing AI can help people do.'}
+];}
+function sample(show,title,diff,desc){return {id:uid(),show,title,topic:'AI Basics',difficulty:diff,url:'',description:desc+' (Sample — edit me!)',
+  quiz:baseQuiz(),
+  challenge:'Find one example of AI you use in real life (a voice assistant, video recommendations, a game, etc.). Explain to a parent how you think it works, and snap a photo of it.'};}
+function sampleAdv(show,title,diff,desc){return {id:uid(),show,title,topic:'AI in Society',difficulty:diff,url:'',description:desc+' (Sample — edit me!)',
+  quiz:[
+    {type:'mc',q:'What is one reason people debate AI rules and safety?',options:['AI can affect jobs, privacy, and fairness','AI is always perfect','AI cannot be used by anyone','AI is just a video game'],correct:0},
+    {type:'mc',q:'What is "training data"?',options:['Examples used to teach an AI','A type of computer screen','A robot body','A podcast app'],correct:0},
+    {type:'short',q:'Describe one good use AND one risk of AI you heard about.'}
+  ],
+  challenge:'Write 3 sentences: one cool thing AI can do, one worry people have, and one rule YOU would make for AI. Read it to a parent.'};}
+
+let S=load();
+function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.kids)return r;}catch(e){}const s=seed();localStorage.setItem(KEY,JSON.stringify(s));return s;}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+
+/* ---------------- Helpers ---------------- */
+let currentKid=null, currentPodcast=null, loopState=null;
+function diffBucket(d){return d<=3?'beg':d<=6?'mid':d<=8?'hard':'exp';}
+function diffColor(d){return {beg:'var(--beg)',mid:'var(--mid)',hard:'var(--hard)',exp:'var(--exp)'}[diffBucket(d)];}
+function diffLabel(d){return {beg:'Beginner',mid:'Intermediate',hard:'Advanced',exp:'Expert'}[diffBucket(d)];}
+function kidById(id){return S.kids.find(k=>k.id===id);}
+function podById(id){return S.podcasts.find(p=>p.id===id);}
+function kidBalance(id){return S.ledger.filter(l=>l.kidId===id).reduce((a,l)=>a+l.amount,0);}
+function show(v){document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('view-'+v).classList.add('active');window.scrollTo(0,0);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function modal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modalBg').classList.add('open');}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')closeModal();});
+
+/* ---------------- Kid picker ---------------- */
+function goKidPicker(){
+  document.getElementById('btnKid').className='primary sm';document.getElementById('btnParent').className='ghost sm';
+  const el=document.getElementById('kidPicker');
+  el.innerHTML=S.kids.map(k=>`<div class="kid-tile" onclick="enterKid('${k.id}')">
+    <div class="avatar">${esc(k.emoji)}</div><b>${esc(k.name)}</b>
+    <span class="balance" style="font-size:20px">${fmt(kidBalance(k.id))}</span></div>`).join('')
+    || '<p class="empty">No kids yet — add them in Parent &rarr; Kids.</p>';
+  show('pick');
+}
+function enterKid(id){currentKid=kidById(id);renderKidHome();show('kidhome');}
+
+/* ---------------- Kid home ---------------- */
+function renderKidHome(){
+  const k=currentKid; if(!k)return goKidPicker();
+  document.getElementById('khAvatar').textContent=k.emoji;
+  document.getElementById('khName').textContent=k.name;
+  document.getElementById('khLevel').textContent=k.level;
+  document.getElementById('khBalance').textContent=fmt(kidBalance(k.id));
+
+  // in-progress / awaiting
+  const acts=S.activities.filter(a=>a.kidId===k.id && a.status!=='completed' && a.status!=='rejected');
+  const ipEl=document.getElementById('khInProgress');
+  if(acts.length){
+    ipEl.innerHTML='<h3>Keep going</h3>'+acts.map(a=>{const p=podById(a.podcastId);if(!p)return'';
+      const label={listening:'Continue ▶',quiz_done:'Do the challenge',challenge_submitted:'⏳ Waiting for parent'}[a.status]||'Continue';
+      const dis=a.status==='challenge_submitted';
+      return `<div class="card click" ${dis?'':`onclick="openLoop('${p.id}')"`} style="${dis?'opacity:.7;cursor:default':''}">
+        <div class="row between"><b>${esc(p.title)}</b><span class="pill" style="background:${diffColor(p.difficulty)}">${label}</span></div>
+        <div class="muted tiny">${esc(p.show)}</div></div>`;}).join('');
+  } else ipEl.innerHTML='';
+
+  // library (exclude completed & in-progress)
+  const busy=new Set(S.activities.filter(a=>a.kidId===k.id && a.status!=='rejected').map(a=>a.podcastId));
+  const f=document.getElementById('filterDiff').value;
+  const list=S.podcasts.filter(p=>!busy.has(p.id) && (f==='all'||diffBucket(p.difficulty)===f));
+  document.getElementById('kidLibrary').innerHTML=list.map(p=>`
+    <div class="card click" onclick="openLoop('${p.id}')">
+      <div class="row between"><span class="pill" style="background:${diffColor(p.difficulty)}">${diffLabel(p.difficulty)} • ${p.difficulty}/10</span></div>
+      <h3 style="margin:8px 0 2px">${esc(p.title)}</h3>
+      <div class="muted tiny">${esc(p.show)}</div>
+      <p class="tiny" style="margin:8px 0">${esc(p.description).slice(0,90)}${p.description.length>90?'…':''}</p>
+      <span class="pill topic">${esc(p.topic)}</span>
+    </div>`).join('') || '<p class="empty">All done at this level! Try another filter or ask a parent for more.</p>';
+}
+
+/* ---------------- The learning loop ---------------- */
+function openLoop(pid){
+  currentPodcast=podById(pid);
+  let act=S.activities.find(a=>a.kidId===currentKid.id&&a.podcastId===pid&&a.status!=='rejected'&&a.status!=='completed');
+  if(!act){act={id:uid(),kidId:currentKid.id,podcastId:pid,status:'listening',quizScore:null,answers:[],shortAnswers:[],challengeProof:null,createdAt:now()};S.activities.push(act);save();}
+  loopState={act,step: act.status==='listening'?'listen':act.status==='quiz_done'?'challenge':'listen'};
+  renderLoop();show('loop');
+}
+function stepIndex(){return {listen:0,quiz:1,challenge:2}[loopState.step];}
+function renderLoop(){
+  const p=currentPodcast, a=loopState.act, si=stepIndex();
+  const stepsHtml=['1. Listen','2. Quiz','3. Challenge'].map((t,i)=>`<div class="step ${i<si?'done':i===si?'current':''}">${t}</div>`).join('');
+  let body='';
+  if(loopState.step==='listen'){
+    body=`<div class="card">
+      <p class="muted tiny">${esc(p.show)} • ${diffLabel(p.difficulty)}</p>
+      <p>${esc(p.description)}</p>
+      ${p.url?`<a href="${esc(p.url)}" target="_blank" rel="noopener"><button class="primary">▶ Open the episode</button></a>`
+              :`<p class="tiny" style="color:var(--gold)">No link yet — ask a parent to add the episode link.</p>`}
+      <hr style="border-color:rgba(255,255,255,.1);margin:16px 0">
+      <p>Finished listening?</p>
+      <button class="good" onclick="goQuiz()">I listened — start the quiz ✓</button>
+    </div>`;
+  } else if(loopState.step==='quiz'){
+    body=`<div class="card"><h3>Quiz: ${esc(p.title)}</h3><p class="muted tiny">Pick the best answer. Pass mark: ${S.config.passThreshold}%</p>
+      <div id="quizForm">${p.quiz.map((q,qi)=>renderQ(q,qi)).join('')}</div>
+      <button class="primary" onclick="submitQuiz()">Submit quiz</button></div>`;
+  } else if(loopState.step==='challenge'){
+    body=`<div class="card"><h3>🎯 Challenge</h3>
+      <p>${esc(p.challenge)}</p>
+      <label>Tell us what you did</label>
+      <textarea id="chText" placeholder="I tried... I found... I learned...">${esc(a.challengeProof?.text||'')}</textarea>
+      <label>Add a photo (optional)</label>
+      <input type="file" id="chPhoto" accept="image/*" onchange="previewPhoto(event)">
+      <div id="photoPrev">${a.challengeProof?.photo?`<img class="proof-img" src="${a.challengeProof.photo}">`:''}</div>
+      <button class="good" style="margin-top:12px" onclick="submitChallenge()">Submit for parent approval ✓</button></div>`;
+  }
+  document.getElementById('loopBody').innerHTML=`<h2>${esc(p.title)}</h2><div class="steps">${stepsHtml}</div>${body}`;
+}
+function renderQ(q,qi){
+  if(q.type==='short')return `<div class="q"><b>${qi+1}. ${esc(q.q)}</b><textarea data-q="${qi}" placeholder="Write your answer..."></textarea></div>`;
+  return `<div class="q"><b>${qi+1}. ${esc(q.q)}</b>${q.options.map((o,oi)=>`<button class="opt" data-q="${qi}" data-o="${oi}" onclick="pickOpt(this)">${esc(o)}</button>`).join('')}</div>`;
+}
+function pickOpt(btn){const qi=btn.dataset.q;document.querySelectorAll(`.opt[data-q="${qi}"]`).forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
+function goQuiz(){loopState.step='quiz';renderLoop();}
+function submitQuiz(){
+  const p=currentPodcast;let correct=0,total=0;const answers=[],shorts=[];
+  let unanswered=false;
+  p.quiz.forEach((q,qi)=>{
+    if(q.type==='short'){const v=document.querySelector(`textarea[data-q="${qi}"]`).value.trim();if(!v)unanswered=true;shorts.push({q:q.q,a:v});}
+    else{total++;const sel=document.querySelector(`.opt[data-q="${qi}"].sel`);if(!sel){unanswered=true;return;}const oi=+sel.dataset.o;answers.push({qi,picked:oi});if(oi===q.correct)correct++;}
+  });
+  if(unanswered){toast('Answer every question first!');return;}
+  const score=total?Math.round(correct/total*100):100;
+  const a=loopState.act;a.quizScore=score;a.answers=answers;a.shortAnswers=shorts;
+  if(score>=S.config.passThreshold){a.status='quiz_done';save();
+    modal(`<h2>🎉 Passed!</h2><p>You scored <b>${score}%</b>. Now go do the challenge to earn your money.</p><button class="primary" onclick="closeModal();loopState.step='challenge';renderLoop()">On to the challenge →</button>`);
+  } else {
+    modal(`<h2>So close!</h2><p>You scored ${score}%. You need ${S.config.passThreshold}% to pass. Listen again and retry!</p><button class="primary" onclick="closeModal();loopState.step='quiz';renderLoop()">Try again</button>`);
+  }
+}
+let pendingPhoto=null;
+function previewPhoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const max=600;let{width:w,height:h}=img;if(w>h&&w>max){h=h*max/w;w=max;}else if(h>max){w=w*max/h;h=max;}c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);pendingPhoto=c.toDataURL('image/jpeg',0.7);document.getElementById('photoPrev').innerHTML=`<img class="proof-img" src="${pendingPhoto}">`;};img.src=ev.target.result;};r.readAsDataURL(f);}
+function submitChallenge(){
+  const text=document.getElementById('chText').value.trim();
+  if(!text){toast('Tell us what you did first!');return;}
+  const a=loopState.act;a.challengeProof={text,photo:pendingPhoto||a.challengeProof?.photo||null};a.status='challenge_submitted';a.submittedAt=now();pendingPhoto=null;save();
+  modal(`<h2>📨 Sent to your parent!</h2><p>Great work. When a parent approves it, your money lands in your account.</p><button class="primary" onclick="closeModal();renderKidHome();show('kidhome')">Back to home</button>`);
+}
+
+/* ---------------- Parent ---------------- */
+function parentEntry(){document.getElementById('pinInput').value='';document.getElementById('pinErr').textContent='';show('gate');setTimeout(()=>document.getElementById('pinInput').focus(),50);}
+function checkPin(){if(document.getElementById('pinInput').value===S.pin){openParent();}else{document.getElementById('pinErr').textContent='Wrong PIN';}}
+function openParent(){document.getElementById('btnParent').className='primary sm';document.getElementById('btnKid').className='ghost sm';parentTab('approvals');show('parent');}
+function pendingCount(){return S.activities.filter(a=>a.status==='challenge_submitted').length;}
+function parentTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  const b=pendingCount();const badge=document.getElementById('apprBadge');badge.textContent=b;badge.style.display=b?'inline-block':'none';
+  ({approvals:renderApprovals,podcasts:renderPodcasts,kids:renderKids,reports:renderReports,settings:renderSettings}[t])();
+}
+function renderApprovals(){
+  const pend=S.activities.filter(a=>a.status==='challenge_submitted').sort((a,b)=>a.submittedAt-b.submittedAt);
+  const el=document.getElementById('parentBody');
+  if(!pend.length){el.innerHTML='<p class="empty">🎉 Nothing waiting! All caught up.</p>';return;}
+  el.innerHTML='<h2>Waiting for your review</h2>'+pend.map(a=>{
+    const k=kidById(a.kidId),p=podById(a.podcastId);if(!k||!p)return'';
+    const sug=suggestReward(p,a);
+    const shorts=(a.shortAnswers||[]).map(s=>`<div class="q tiny"><b>Q:</b> ${esc(s.q)}<br><b>A:</b> ${esc(s.a)||'<i>(blank)</i>'}</div>`).join('');
+    return `<div class="card">
+      <div class="row between"><b>${esc(k.emoji)} ${esc(k.name)}</b><span class="pill" style="background:${diffColor(p.difficulty)}">${diffLabel(p.difficulty)} • ${p.difficulty}/10</span></div>
+      <p style="margin:4px 0">${esc(p.title)} <span class="muted tiny">— ${esc(p.show)}</span></p>
+      <p class="tiny">Quiz score: <b>${a.quizScore}%</b></p>
+      ${shorts?`<details><summary class="tiny muted">Written answers</summary>${shorts}</details>`:''}
+      <div class="q"><b>Challenge:</b> ${esc(p.challenge)}<br><br><b>What they did:</b><br>${esc(a.challengeProof?.text||'')}
+        ${a.challengeProof?.photo?`<br><img class="proof-img" src="${a.challengeProof.photo}">`:''}</div>
+      <label>Reward to credit</label>
+      <div class="row"><span>$</span><input type="number" step="0.25" value="${sug.toFixed(2)}" id="rew_${a.id}" style="max-width:120px"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="good" onclick="approve('${a.id}')">✓ Approve & pay</button>
+        <button class="warn" onclick="reject('${a.id}')">✗ Send back</button>
+      </div></div>`;
+  }).join('');
+}
+function suggestReward(p,a){const c=S.config;let r=c.listen;if((a.quizScore||0)>=c.passThreshold)r+=c.quizBase+p.difficulty*c.quizPerDiff;r+=c.challengeBase+p.difficulty*c.challengePerDiff;return Math.round(r*4)/4;}
+function approve(aid){
+  const a=S.activities.find(x=>x.id===aid);const p=podById(a.podcastId);const amt=parseFloat(document.getElementById('rew_'+aid).value)||0;
+  a.status='completed';a.completedAt=now();a.earned=amt;
+  S.ledger.push({id:uid(),kidId:a.kidId,amount:amt,reason:`Completed: ${p.title}`,ts:now(),type:'earn'});
+  const k=kidById(a.kidId);if(k){const done=S.activities.filter(x=>x.kidId===k.id&&x.status==='completed').length;k.level=1+Math.floor(done/3);}
+  save();toast('Approved — '+fmt(amt)+' credited');parentTab('approvals');
+}
+function reject(aid){const a=S.activities.find(x=>x.id===aid);a.status='listening';a.quizScore=null;a.answers=[];a.shortAnswers=[];a.challengeProof=null;save();toast('Sent back for another try');parentTab('approvals');}
+
+function renderPodcasts(){
+  const el=document.getElementById('parentBody');
+  el.innerHTML=`<div class="row between"><h2>Podcast library</h2><button class="primary sm" onclick="editPodcast()">+ Add podcast</button></div>`+
+    `<div class="grid cards">`+S.podcasts.map(p=>`<div class="card">
+      <div class="row between"><span class="pill" style="background:${diffColor(p.difficulty)}">${p.difficulty}/10</span>
+        <div class="row"><button class="ghost sm" onclick="editPodcast('${p.id}')">Edit</button><button class="warn sm" onclick="delPodcast('${p.id}')">✕</button></div></div>
+      <b>${esc(p.title)}</b><div class="muted tiny">${esc(p.show)}</div>
+      <p class="tiny">${esc(p.topic)} • ${p.quiz.length} quiz Qs ${p.url?'• 🔗 link set':'• ⚠ no link'}</p></div>`).join('')+`</div>`;
+}
+function delPodcast(id){modal(`<h3>Delete this podcast?</h3><p class="muted tiny">It won't remove past completed records.</p><div class="row"><button class="warn" onclick="S.podcasts=S.podcasts.filter(p=>p.id!=='${id}');save();closeModal();renderPodcasts()">Delete</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);}
+function editPodcast(id){
+  const p=id?podById(id):{id:'',title:'',show:'',topic:'AI Basics',difficulty:3,url:'',description:'',quiz:baseQuiz(),challenge:''};
+  window._editP=JSON.parse(JSON.stringify(p));
+  drawPodcastModal();
+}
+function drawPodcastModal(){
+  const p=window._editP;
+  modal(`<h2>${p.id?'Edit':'New'} podcast</h2>
+    <label>Episode title</label><input id="pTitle" value="${esc(p.title)}">
+    <label>Show name</label><input id="pShow" value="${esc(p.show)}">
+    <label>Topic tag</label><input id="pTopic" value="${esc(p.topic)}">
+    <label>Difficulty (1 easy → 10 expert): <b id="dVal">${p.difficulty}</b></label>
+    <input type="range" min="1" max="10" value="${p.difficulty}" id="pDiff" oninput="document.getElementById('dVal').textContent=this.value">
+    <label>Episode link (paste the real URL)</label><input id="pUrl" value="${esc(p.url)}" placeholder="https://...">
+    <label>Description</label><textarea id="pDesc">${esc(p.description)}</textarea>
+    <label>Challenge (the "go do something" task)</label><textarea id="pChal">${esc(p.challenge)}</textarea>
+    <hr style="border-color:rgba(255,255,255,.1)">
+    <div class="row between"><b>Quiz questions</b><button class="ghost sm" onclick="addQ('mc')">+ Multiple choice</button></div>
+    <div id="quizEdit">${p.quiz.map((q,i)=>qEditRow(q,i)).join('')}</div>
+    <button class="ghost sm" onclick="addQ('short')">+ Written question</button>
+    <div class="row" style="margin-top:16px"><button class="primary" onclick="savePodcast()">Save podcast</button><button class="ghost" onclick="closeModal()">Cancel</button></div>
+    <p class="tiny muted" style="margin-top:8px">Tip: paste a transcript to Claude Code and ask it to draft these questions, then review & paste here.</p>`);
+}
+function qEditRow(q,i){
+  if(q.type==='short')return `<div class="q"><div class="row between"><span class="tiny muted">Written answer</span><button class="warn sm" onclick="rmQ(${i})">✕</button></div><input data-qi="${i}" data-f="q" value="${esc(q.q)}" oninput="syncQ(this)" placeholder="Question"></div>`;
+  return `<div class="q"><div class="row between"><span class="tiny muted">Multiple choice — click ✓ for correct</span><button class="warn sm" onclick="rmQ(${i})">✕</button></div>
+    <input data-qi="${i}" data-f="q" value="${esc(q.q)}" oninput="syncQ(this)" placeholder="Question">
+    ${q.options.map((o,oi)=>`<div class="row" style="margin-top:4px"><button class="sm ${q.correct===oi?'good':'ghost'}" onclick="setCorrect(${i},${oi})">✓</button><input style="flex:1" data-qi="${i}" data-f="opt" data-oi="${oi}" value="${esc(o)}" oninput="syncQ(this)" placeholder="Option ${oi+1}"></div>`).join('')}</div>`;
+}
+function syncQ(inp){const i=+inp.dataset.qi,f=inp.dataset.f,q=window._editP.quiz[i];if(f==='q')q.q=inp.value;else if(f==='opt')q.options[+inp.dataset.oi]=inp.value;}
+function setCorrect(i,oi){window._editP.quiz[i].correct=oi;drawPodcastModal();}
+function addQ(type){window._editP.quiz.push(type==='short'?{type:'short',q:''}:{type:'mc',q:'',options:['','','',''],correct:0});drawPodcastModal();}
+function rmQ(i){window._editP.quiz.splice(i,1);drawPodcastModal();}
+function savePodcast(){
+  const p=window._editP;
+  p.title=document.getElementById('pTitle').value.trim();
+  p.show=document.getElementById('pShow').value.trim();
+  p.topic=document.getElementById('pTopic').value.trim()||'AI';
+  p.difficulty=+document.getElementById('pDiff').value;
+  p.url=document.getElementById('pUrl').value.trim();
+  p.description=document.getElementById('pDesc').value.trim();
+  p.challenge=document.getElementById('pChal').value.trim();
+  if(!p.title){toast('Add a title');return;}
+  if(p.id){const i=S.podcasts.findIndex(x=>x.id===p.id);S.podcasts[i]=p;}else{p.id=uid();S.podcasts.push(p);}
+  save();closeModal();renderPodcasts();toast('Saved');
+}
+
+function renderKids(){
+  const el=document.getElementById('parentBody');
+  el.innerHTML=`<div class="row between"><h2>Kids</h2><button class="primary sm" onclick="editKid()">+ Add kid</button></div>`+
+    `<div class="grid cards">`+S.kids.map(k=>`<div class="card"><div class="row between"><div class="avatar" style="width:48px;height:48px;font-size:26px">${esc(k.emoji)}</div>
+      <div class="row"><button class="ghost sm" onclick="editKid('${k.id}')">Edit</button><button class="warn sm" onclick="delKid('${k.id}')">✕</button></div></div>
+      <h3 style="margin:8px 0 0">${esc(k.name)}</h3><div class="muted tiny">Level ${k.level} • Balance ${fmt(kidBalance(k.id))}</div>
+      <button class="primary sm" style="margin-top:8px" onclick="payout('${k.id}')">Pay out ${fmt(kidBalance(k.id))}</button></div>`).join('')+`</div>`;
+}
+function editKid(id){
+  const k=id?kidById(id):{id:'',name:'',emoji:'🦊',level:1};
+  modal(`<h2>${id?'Edit':'New'} kid</h2>
+    <label>Name</label><input id="kName" value="${esc(k.name)}">
+    <label>Pick an emoji avatar</label>
+    <div class="row" id="emojiPick">${['🦊','🐼','🐯','🐸','🦄','🐙','🦉','🐲','🐶','🐱','🐵','🦁'].map(e=>`<button class="sm ${e===k.emoji?'good':'ghost'}" onclick="document.querySelectorAll('#emojiPick button').forEach(b=>b.className='sm ghost');this.className='sm good';window._ke='${e}'">${e}</button>`).join('')}</div>
+    <div class="row" style="margin-top:16px"><button class="primary" onclick="saveKid('${k.id}')">Save</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);
+  window._ke=k.emoji;
+}
+function saveKid(id){const name=document.getElementById('kName').value.trim();if(!name){toast('Add a name');return;}
+  if(id){const k=kidById(id);k.name=name;k.emoji=window._ke;}else{S.kids.push({id:uid(),name,emoji:window._ke||'🦊',level:1});}
+  save();closeModal();renderKids();}
+function delKid(id){modal(`<h3>Remove this kid?</h3><p class="muted tiny">Their history stays in records.</p><div class="row"><button class="warn" onclick="S.kids=S.kids.filter(k=>k.id!=='${id}');save();closeModal();renderKids()">Remove</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);}
+function payout(id){const bal=kidBalance(id);if(bal<=0){toast('Nothing to pay out');return;}const k=kidById(id);
+  modal(`<h3>Pay out ${fmt(bal)} to ${esc(k.name)}?</h3><p class="muted tiny">This records the payout and resets their balance to $0. Hand over the cash/Venmo separately.</p>
+    <div class="row"><button class="good" onclick="doPayout('${id}',${bal})">Confirm payout</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);}
+function doPayout(id,bal){S.ledger.push({id:uid(),kidId:id,amount:-bal,reason:'Paid out',ts:now(),type:'payout'});save();closeModal();renderKids();toast('Paid out '+fmt(bal));}
+
+function renderReports(){
+  const el=document.getElementById('parentBody');
+  el.innerHTML='<h2>Reports</h2>'+S.kids.map(k=>{
+    const done=S.activities.filter(a=>a.kidId===k.id&&a.status==='completed').sort((a,b)=>b.completedAt-a.completedAt);
+    const earned=S.ledger.filter(l=>l.kidId===k.id&&l.type==='earn').reduce((a,l)=>a+l.amount,0);
+    const avg=done.length?Math.round(done.reduce((a,x)=>a+(x.quizScore||0),0)/done.length):0;
+    const rows=done.map(a=>{const p=podById(a.podcastId);return `<div class="ledger-row"><div><b>${esc(p?p.title:'?')}</b><br><span class="tiny muted">${new Date(a.completedAt).toLocaleDateString()} • Quiz ${a.quizScore}% • ✓ listened ✓ quizzed ✓ did challenge</span></div><span class="pos">${fmt(a.earned)}</span></div>`;}).join('')||'<p class="empty tiny">No completed loops yet.</p>';
+    const led=S.ledger.filter(l=>l.kidId===k.id).sort((a,b)=>b.ts-a.ts).map(l=>`<div class="ledger-row tiny"><span>${esc(l.reason)} <span class="muted">${new Date(l.ts).toLocaleDateString()}</span></span><span class="${l.amount>=0?'pos':'neg'}">${l.amount>=0?'+':''}${fmt(l.amount)}</span></div>`).join('');
+    return `<div class="card"><div class="row between"><h3>${esc(k.emoji)} ${esc(k.name)}</h3><span class="muted tiny">${done.length} completed • avg quiz ${avg}% • earned ${fmt(earned)} • balance ${fmt(kidBalance(k.id))}</span></div>
+      ${rows}<details style="margin-top:8px"><summary class="tiny muted">Money history</summary>${led||'<span class="tiny muted">none</span>'}</details></div>`;
+  }).join('');
+}
+
+function renderSettings(){
+  const c=S.config;const el=document.getElementById('parentBody');
+  el.innerHTML=`<h2>Settings</h2>
+  <div class="card"><h3>Parent PIN</h3>
+    <label>New PIN</label><input id="setPin" value="${esc(S.pin)}" maxlength="8">
+    <button class="primary sm" style="margin-top:8px" onclick="S.pin=document.getElementById('setPin').value||'1234';save();toast('PIN updated')">Save PIN</button></div>
+  <div class="card"><h3>Quiz pass mark</h3>
+    <label>Minimum % to pass: <b id="ptVal">${c.passThreshold}</b>%</label>
+    <input type="range" min="50" max="100" step="5" value="${c.passThreshold}" oninput="document.getElementById('ptVal').textContent=this.value" onchange="S.config.passThreshold=+this.value;save()"></div>
+  <div class="card"><h3>Reward amounts ($)</h3>
+    <p class="tiny muted">Higher difficulty pays more automatically. You can still edit each payout when you approve.</p>
+    <div class="grid cards">
+      ${rewField('Listening','listen')}
+      ${rewField('Quiz base','quizBase')}
+      ${rewField('Per difficulty (quiz)','quizPerDiff')}
+      ${rewField('Challenge base','challengeBase')}
+      ${rewField('Per difficulty (challenge)','challengePerDiff')}
+    </div>
+    <p class="tiny" style="margin-top:8px">Example payout for a level-5 podcast: <b>${fmt(suggestReward({difficulty:5},{quizScore:100}))}</b></p></div>
+  <div class="card"><h3>Backup your data</h3>
+    <p class="tiny muted">Everything is saved in this browser only. Export regularly, and Import to move it to another device.</p>
+    <div class="row"><button class="primary sm" onclick="exportData()">⬇ Export JSON</button>
+      <button class="ghost sm" onclick="document.getElementById('importFile').click()">⬆ Import JSON</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)"></div>
+    <button class="warn sm" style="margin-top:10px" onclick="resetAll()">Reset everything</button></div>`;
+}
+function rewField(label,key){return `<div><label>${label}</label><input type="number" step="0.05" value="${S.config[key]}" onchange="S.config['${key}']=parseFloat(this.value)||0;save();renderSettings()"></div>`;}
+function exportData(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai-learning-range-backup.json';a.click();toast('Exported');}
+function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!d.kids)throw 0;S=d;save();toast('Imported!');openParent();}catch(_){toast('That file is not valid');}};r.readAsText(f);}
+function resetAll(){modal(`<h3>Reset ALL data?</h3><p class="muted tiny">This wipes kids, podcasts, money and reports. Export a backup first!</p><div class="row"><button class="warn" onclick="localStorage.removeItem(KEY);S=load();closeModal();openParent();toast('Reset done')">Yes, wipe it</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);}
+
+/* ---------------- init ---------------- */
+goKidPicker();
+</script>
+</body>
+</html>
