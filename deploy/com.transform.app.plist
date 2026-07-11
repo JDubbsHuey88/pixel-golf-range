@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.transform.app</string>
+
+  <!-- Adjust to `which npm` (often /opt/homebrew/bin/npm on Apple Silicon). -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/npm</string>
+    <string>start</string>
+  </array>
+
+  <!-- Absolute path to this repo. `.env` is read from here. -->
+  <key>WorkingDirectory</key>
+  <string>/REPLACE/WITH/PATH/TO/repo</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <!-- Restart the app if it ever crashes. -->
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/transform.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/transform.err.log</string>
+</dict>
+</plist>
