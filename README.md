@@ -34,6 +34,27 @@ npm start                   # then reach it over Tailscale from the phone
 
 Run the parser tests with `npm test`.
 
+## Auto-start on the Mac Mini (launchd)
+
+The MCP server needs no daemon — Eagle's MCP client spawns `node mcp/server.js`
+on demand over stdio. Only the Next.js app must survive reboots. A LaunchAgent
+template is included at `deploy/com.transform.app.plist`:
+
+```bash
+npm run build                                  # `npm start` serves the built app
+cp deploy/com.transform.app.plist ~/Library/LaunchAgents/
+# edit ~/Library/LaunchAgents/com.transform.app.plist:
+#   - ProgramArguments npm path → output of `which npm`
+#   - WorkingDirectory → absolute path to this repo
+launchctl load ~/Library/LaunchAgents/com.transform.app.plist
+```
+
+`RunAtLoad` starts the app at login and `KeepAlive` restarts it on crash. Logs
+go to `/tmp/transform.log` / `/tmp/transform.err.log`. Note a LaunchAgent runs
+at **login**, not boot — enable automatic login for the Mini's user (System
+Settings → Users & Groups), or install it as a LaunchDaemon in
+`/Library/LaunchDaemons` instead if you need it login-independent.
+
 ## Backup
 
 **Everything under `./data/` is the backup unit** — the SQLite DB and all photos.
