@@ -1,0 +1,2 @@
+# eagle has no Python dependencies for v1 — uses only the standard library.
+# It does require `ffmpeg` and `ffprobe` on PATH (install with brew/apt).

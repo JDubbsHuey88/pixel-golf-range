@@ -1,0 +1,48 @@
+{
+  "shot_count": 10,
+  "detection": {
+    "method": "audio_peaks",
+    "min_gap_seconds": 6.0,
+    "audio_smoothing_ms": 150,
+    "fallback_to_even_split": true
+  },
+  "speed_ramp": {
+    "between_shots_multiplier": 2.5,
+    "normal_window_before_seconds": 2.0,
+    "normal_window_after_seconds": 3.0
+  },
+  "overlays": {
+    "shot_counter": {
+      "enabled": true,
+      "format": "Shot {n} of {total}",
+      "position": "top_left",
+      "font_size_pct_of_height": 4.5,
+      "text_color": "white",
+      "box_color": "black@0.55",
+      "box_padding_px": 12,
+      "margin_px": 32
+    },
+    "tally": {
+      "enabled": true,
+      "format": "{makes}/{attempts}",
+      "position": "top_right",
+      "font_size_pct_of_height": 6.0,
+      "text_color": "white",
+      "box_color": "black@0.55",
+      "box_padding_px": 12,
+      "margin_px": 32
+    }
+  },
+  "output": {
+    "folder": "output/freethrows",
+    "format": "mp4",
+    "orientation": "portrait_9_16",
+    "video_codec": "libx264",
+    "audio_codec": "aac",
+    "preset": "medium",
+    "crf": 20,
+    "auto_open": true,
+    "mirror_to": null,
+    "_mirror_to_help": "Set to a folder path (e.g. ~/Library/Mobile Documents/com~apple~CloudDocs/Eagle) to also copy finished reels there for phone access via iCloud Drive."
+  }
+}

@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.eagle_work/
+inbox/games/*.shots.txt
+inbox/freethrows/*.shots.json
+# keep video files out of git — they belong on disk only
+inbox/games/*.mp4
+inbox/games/*.mov
+inbox/games/*.m4v
+inbox/games/*.mkv
+inbox/freethrows/*.mp4
+inbox/freethrows/*.mov
+inbox/freethrows/*.m4v
+inbox/freethrows/*.mkv
+output/games/*.mp4
+output/freethrows/*.mp4
+assets/music/*.mp3
+assets/music/*.m4a
+assets/music/*.wav
